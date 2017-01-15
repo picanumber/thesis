@@ -1,20 +1,12 @@
-//
-// Copyright (C) 2013 Mateusz Loskot <mateusz@loskot.net>
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
-//
-// Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy 
-// at http://www.boost.org/LICENSE_1_0.txt)
-//
-#define FYGE
-#ifndef FYGE
-#define MLOSKOT_SPATIAL_INDEX_BENCHMARK_HPP_INCLUDED
+#pragma once
+
 #ifdef _MSC_VER
 #if (_MSC_VER == 1700)
 #define _VARIADIC_MAX 6
 #endif
 #define NOMINMAX
 #endif // _MSC_VER
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -289,4 +281,3 @@ inline result_info benchmark(char const* step, std::size_t iterations,
 
 } // namespace sibench
 
-#endif

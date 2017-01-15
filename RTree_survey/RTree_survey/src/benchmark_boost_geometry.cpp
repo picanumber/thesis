@@ -1,11 +1,3 @@
-#if 0
-//
-// Copyright (C) 2013 Mateusz Loskot <mateusz@loskot.net>
-//
-// Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy 
-// at http://www.boost.org/LICENSE_1_0.txt)
-//
 #include "spatial_index_benchmark.hpp"
 #ifdef SIBENCH_RTREE_LOAD_BLK
 #define BOOST_GEOMETRY_INDEX_DETAIL_EXPERIMENTAL 1
@@ -194,4 +186,4 @@ int main()
 	return EXIT_FAILURE;
 }
 
-#endif // 0
+

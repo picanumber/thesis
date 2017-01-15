@@ -1,12 +1,4 @@
-//  Copyright (c) 2005-2010 Hartmut Kaiser
-//  Copyright (c) 2009      Edward Grace
-// 
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying 
-//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-
-#define FYGE
-#if FYGE
-#define HIGH_RESOLUTION_TIMER_MAR_24_2008_1222PM
+#pragma once
 
 #include <boost/config.hpp>
 #include <boost/throw_exception.hpp>
@@ -14,6 +6,7 @@
 #if defined(BOOST_HAS_UNISTD_H)
 #include <unistd.h>
 #endif
+
 #include <time.h>
 #include <stdexcept>
 #include <limits>
@@ -458,7 +451,7 @@ namespace util
 
 #endif
 
-#endif  // HIGH_RESOLUTION_TIMER_AUG_14_2009_0425PM
+
 
 //
 // $Log: high_resolution_timer.hpp,v $
