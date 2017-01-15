@@ -26,6 +26,10 @@
 #include <utility>
 #include "high_resolution_timer.hpp"
 
+
+#define SIBENCH_RTREE_SPLIT_LINEAR
+#define SIBENCH_RTREE_LOAD_ITR
+
 namespace sibench
 {
 

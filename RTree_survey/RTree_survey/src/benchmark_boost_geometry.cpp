@@ -26,7 +26,10 @@ void print_statistics(std::ostream& os, std::string const& lib, T const& i)
 		<< std::endl;
 }
 
-int main()
+#define SIBENCH_BGI_RTREE_PARAMS_CT 1
+
+
+int benchmark_boost_geometry()
 {
 	try
 	{
