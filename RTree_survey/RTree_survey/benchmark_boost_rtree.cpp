@@ -8,7 +8,6 @@
 
 using namespace utl; 
 
-// TOOD: how about using 2D AND 3D points ???
 namespace
 {
 	template <class Box> struct inner_pt;
@@ -39,9 +38,6 @@ namespace
 		std::cout << "----------------------- compile time params version\n";
 
 		std::string const lib("bgi_ct");
-
-		// Generate random objects for indexing
-		//auto const boxes = sibench::generate_boxes(sibench::max_insertions);
 
 		std::size_t const max_capacity = 1024;
 		std::size_t const min_capacity = 340;
