@@ -1,0 +1,1 @@
+{ 'benchmark_name' : 'Loading time: Fixed capacity', 'experiment_name' : 'name here', 'time_type' : 'milliseconds', 'factor_name' : 'number of elements', 'factors' : [ 10000, 50000 ], 'timings' : [ 730, 13162 ] } 
