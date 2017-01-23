@@ -6,7 +6,11 @@
 #include <CODEine/benchmark.h>
 #include "bmk_utils.h"
 
+#define FULL_SCALE 0
+
 using namespace utl; 
+using real_secs_t = std::chrono::duration<double, std::ratio<1>>; 
+using bmk_t = bmk::benchmark<real_secs_t>; 
 
 namespace
 {
@@ -26,6 +30,47 @@ namespace
 
 namespace 
 {
+	template <class rtree_t, class boxes_t>
+	struct load_experiment
+	{
+		boxes_t const& _boxes;
+		rtree_load const _load;
+
+		load_experiment(boxes_t const& boxes, rtree_load load)
+			: _boxes(boxes)
+			, _load(load)
+		{
+		}
+		
+		void operator()(std::size_t numElems)
+		{
+			std::size_t ni = 0; 
+
+			switch (_load)
+			{
+			case rtree_load::bulk:
+			{
+				auto it{ std::cbegin(_boxes) }, ite{ std::cbegin(_boxes) };
+				std::advance(ite, numElems); 
+				rtree_t rtree(it, ite); 
+				ni = rtree.size(); 
+			}
+			break;
+			case rtree_load::iterative:
+			{
+				rtree_t rtree;
+				for (size_t i = 0; i < numElems; i++)
+				{
+					rtree.insert(_boxes[i]);
+				}
+				ni = rtree.size(); 
+			}
+			break;
+			}
+
+			assert(numElems == ni); // also prevents from optimizing away the temp trees
+		}
+	};
 
 	template <
 		enum class rtree_param param,
@@ -34,30 +79,27 @@ namespace
 	> 
 		std::enable_if_t<param == rtree_param::compile_time, int> bmk_impl(
 			rtree_split split, rtree_load load, std::vector<box_t> const& boxes,
-			bmk::benchmark<>& load_ct, bmk::benchmark<>& query_ct,
-			bmk::benchmark<>& load_rt, bmk::benchmark<>& query_rt)
+			bmk_t& load_ct, bmk_t& query_ct, bmk_t& load_rt, bmk_t& query_rt)
 	{
-		std::cout << "----------------------- compile time params version\n";
+		std::cout << get_info_header(param, split, load) << " ============ BEGIN\n"; 
 
-		std::string const lib("bgi_ct");
-
-		std::size_t const max_capacity = 1024;
+		std::size_t const max_capacity = 1024; // TODO: Fix those
 		std::size_t const min_capacity = 340;
 
 		using point_t = inner_pt_t<box_t>;
 		using rtree_t = bgi::rtree<box_t, split_t<max_capacity, min_capacity>>;
+		using boxes_t = std::vector<box_t>; 
 
+		load_ct.run(rtree_load::iterative == load ? utl::nameof_split(split) : nameof_load(load), 1, 
+			load_experiment<rtree_t, boxes_t>(boxes, load), "number of elements", {
+#if !FULL_SCALE
+			10'000, 20'000, 30'000, 40'000, 50'000
+#else
+			100'000, 200'000, 300'000, 400'000, 500'000, 600'000, 700'000, 800'000, 900'000, 1'000'000 
+#endif
+		});
 
-		load_ct.run("name here", 1, [&](std::size_t numElems)
-		{
-			rtree_t rtree;
-			auto sz = boxes.size();
-			for (size_t i = 0; i < numElems; i++)
-			{
-				rtree.insert(boxes[i % sz]);
-			}
-		}, "number of elements", { 10'000, 50'000 });
-
+		std::cout << get_info_header(param, split, load) << " ============== END\n\n";
 		return 0;
 	}
 
@@ -68,8 +110,7 @@ namespace
 	> 
 		std::enable_if_t<param == rtree_param::run_time, int> bmk_impl(
 			rtree_split split, rtree_load load, std::vector<box_t> const& boxes,
-			bmk::benchmark<>& load_ct, bmk::benchmark<>& query_ct,
-			bmk::benchmark<>& load_rt, bmk::benchmark<>& query_rt)
+			bmk_t& load_ct, bmk_t& query_ct, bmk_t& load_rt, bmk_t& query_rt)
 	{
 		std::cout << "--------------------------- run time params version\n";
 
@@ -80,8 +121,7 @@ namespace
 template <class box_t>
 int do_rtree_bmk(
 	rtree_param param, rtree_split split, rtree_load load, std::vector<box_t> const& boxes, 
-	bmk::benchmark<>& load_ct, bmk::benchmark<>& query_ct, 
-	bmk::benchmark<>& load_rt, bmk::benchmark<>& query_rt)
+	bmk_t& load_ct, bmk_t& query_ct, bmk_t& load_rt, bmk_t& query_rt)
 {
 	switch (param)
 	{
@@ -120,20 +160,36 @@ int do_rtree_bmk(
 	}
 }
 
+const std::vector<rtree_param> param_vs{ rtree_param::run_time, rtree_param::compile_time }; 
+const std::vector<rtree_split> split_vs{ rtree_split::linear, rtree_split::quadratic, rtree_split::rstar }; 
+const std::vector<rtree_load>  load_vs{ rtree_load::bulk, rtree_load::iterative }; 
+
 int benchmark_boost_rtree()
 {
 	std::cout << "BEGIN=====================================================\n\n";
 
 	typedef bg::model::point<double, 2, bg::cs::cartesian> point_t;
 	typedef bg::model::box<point_t> box_t;
+
+
+	auto vt = utl::cartesian_product(param_vs, split_vs, load_vs); 
+	for (auto& elem : vt) utl::print_tuple(std::cout, elem); 
+
+	return 0; 
 	
 	std::vector<box_t> boxes = utl::generate_boxes<2, double>(1'000'000, 10); 
 
-	bmk::benchmark<> load_ct, query_ct, load_rt, query_rt; 
+	bmk_t load_ct, query_ct, load_rt, query_rt; 
 
-	int ret = do_rtree_bmk(rtree_param::compile_time, rtree_split::linear, rtree_load::bulk, 
+	// max capacity must be one of the parameters
+	do_rtree_bmk(rtree_param::compile_time, rtree_split::linear, rtree_load::iterative, 
 		boxes, load_ct, query_ct, load_rt, query_rt);
-
+	do_rtree_bmk(rtree_param::compile_time, rtree_split::quadratic, rtree_load::iterative,
+		boxes, load_ct, query_ct, load_rt, query_rt);
+	do_rtree_bmk(rtree_param::compile_time, rtree_split::rstar, rtree_load::iterative,
+		boxes, load_ct, query_ct, load_rt, query_rt);
+	do_rtree_bmk(rtree_param::compile_time, rtree_split::linear, rtree_load::bulk,
+		boxes, load_ct, query_ct, load_rt, query_rt);
 
 	load_ct.serialize("Loading time: Fixed capacity", "load_ct.txt"); 
 	load_rt.serialize("Loading time: Varying capacity", "load_rt.txt"); 
@@ -141,5 +197,5 @@ int benchmark_boost_rtree()
 	query_rt.serialize("Query time: Varying capacity", "query_rt.txt"); 
 	
 	std::cout << "\n=======================================================END\n";
-	return ret; 
+	return 0; 
 }

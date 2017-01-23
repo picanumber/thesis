@@ -8,7 +8,7 @@ Benchmark visualizer
 Utility to plot the output produced by benchmark.h        
 ----------------------------------------------------------
 author         : Nikos Athanasiou
-last modified  : 04 / 04 / 2015  
+last modified  : 21 / 01 / 2017
 website        : https://ngathanasiou.wordpress.com/ 
 ----------------------------------------------------------
 """
@@ -24,7 +24,7 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Polygon
 import pandas as pd
 from tkinter import *
-import tkFileDialog
+import tkinter.filedialog as tkFileDialog
 
 # -----------------------------------------------------------------------   
 def get_numeric_list(any_list):
@@ -33,7 +33,7 @@ def get_numeric_list(any_list):
     """ 
     ret_list = []
     for elem in any_list:
-        if isinstance(elem, basestring):          
+        if isinstance(elem, str):          
             num = int(filter(str.isdigit, elem))
             if 'k' in elem:   num *= 1e03
             elif 'M' in elem: num *= 1e06
@@ -92,7 +92,7 @@ def plot_factored_bmks(factored):
     col = cycle(cols)
     syb = cycle(sybs)
     for bmk in factored:
-        plot_factored_benchmark(bmk, col.next(), syb.next())
+        plot_factored_benchmark(bmk, next(col), next(syb))
 
     legend = plt.legend(loc='upper right', shadow=True)
     #legend.get_frame().set_facecolor('#00FFCC') 

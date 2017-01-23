@@ -39,4 +39,27 @@ namespace utl
 		}
 		return{}; 
 	}
+
+	std::ostream& operator<<(std::ostream& os, rtree_param param)
+	{
+		os << nameof_param(param); 
+		return os; 
+	}
+
+	std::ostream& operator<<(std::ostream& os, rtree_split split)
+	{
+		os << nameof_split(split); 
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, rtree_load load)
+	{
+		os << nameof_load(load); 
+		return os;
+	}
+
+	std::string get_info_header(rtree_param param, rtree_split split, rtree_load load)
+	{
+		return nameof_param(param) + " | " + nameof_split(split) + " | " + nameof_load(load);
+	}
 }
