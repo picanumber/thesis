@@ -14,16 +14,13 @@ namespace utl
 	namespace bgi = bg::index;
 
 	enum class rtree_param : int { run_time, compile_time };
-	enum class rtree_split : int { linear, quadratic, rstar };
-	enum class rtree_load : int { bulk, iterative };
+	enum class rtree_split : int { linear, quadratic, rstar, bulk };
 
 	std::string nameof_param(rtree_param param);
 	std::string nameof_split(rtree_split split);
-	std::string nameof_load (rtree_load load);
 
 	std::ostream& operator<<(std::ostream& os, rtree_param param);
 	std::ostream& operator<<(std::ostream& os, rtree_split split);
-	std::ostream& operator<<(std::ostream& os, rtree_load load);
 
 	template <typename T>
 	struct random_generator
@@ -85,6 +82,15 @@ namespace utl
 		return{ {x - swd, y - swd}, {x + swd, y + swd} };
 	}
 
+	template <std::size_t D, class coord_t, class Factor>
+	std::enable_if_t<2 == D, box_type<D, coord_t>> 
+		bloat_box(box_type<D, coord_t> const& b, Factor fa)
+	{
+		return{
+			{ bg::get<bg::min_corner, 0>(b) - fa, bg::get<bg::min_corner, 1>(b) - fa },
+			{ bg::get<bg::max_corner, 0>(b) + fa, bg::get<bg::max_corner, 1>(b) + fa } };
+	}
+
 	template <std::size_t D, class coord_t, class Gen>
 	std::enable_if_t<3 == D, point_type<D, coord_t>> random_point(Gen& gntr)
 	{
@@ -100,6 +106,15 @@ namespace utl
 		auto const z = gnc();
 
 		return{ {x - swd, y - swd, z - swd}, {x + swd, y + swd, z + swd} };
+	}
+
+	template <std::size_t D, class coord_t, class Factor>
+	std::enable_if_t<3 == D, box_type<D, coord_t>> 
+		bloat_box(box_type<D, coord_t> const& b, Factor fa)
+	{
+		return{
+			{ bg::get<bg::min_corner, 0>(b) - fa, bg::get<bg::min_corner, 1>(b) - fa, bg::get<bg::min_corner, 2>(b) - fa },
+			{ bg::get<bg::max_corner, 0>(b) + fa, bg::get<bg::max_corner, 1>(b) + fa, bg::get<bg::max_corner, 2>(b) + fa } };
 	}
 
 	template <std::size_t D, class coord_t>
@@ -127,7 +142,7 @@ namespace utl
 		return ret;
 	}
 
-	std::string get_info_header(rtree_param param, rtree_split split, rtree_load load);
+	std::string get_info_header(rtree_param param, rtree_split split);
 
 	namespace detail
 	{

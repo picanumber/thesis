@@ -24,20 +24,10 @@ namespace utl
 			return "quadratic"; 
 		case utl::rtree_split::rstar:
 			return "rstar"; 
+		case utl::rtree_split::bulk:
+			return "bulk"; 
 		}
 		return{};
-	}
-	
-	std::string nameof_load(rtree_load load)
-	{
-		switch (load)
-		{
-		case utl::rtree_load::bulk:
-			return "bulk"; 
-		case utl::rtree_load::iterative:
-			return "iterative"; 
-		}
-		return{}; 
 	}
 
 	std::ostream& operator<<(std::ostream& os, rtree_param param)
@@ -52,14 +42,8 @@ namespace utl
 		return os;
 	}
 
-	std::ostream& operator<<(std::ostream& os, rtree_load load)
+	std::string get_info_header(rtree_param param, rtree_split split)
 	{
-		os << nameof_load(load); 
-		return os;
-	}
-
-	std::string get_info_header(rtree_param param, rtree_split split, rtree_load load)
-	{
-		return nameof_param(param) + " | " + nameof_split(split) + " | " + nameof_load(load);
+		return nameof_param(param) + " | " + nameof_split(split); 
 	}
 }
