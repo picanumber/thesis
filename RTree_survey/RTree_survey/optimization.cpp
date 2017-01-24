@@ -1,0 +1,10 @@
+#include "optimization.h"
+
+#include <iostream>
+#include <stdio.h>
+
+
+int test_optimizer(int num, char const * a, char const * b, char const * c)
+{
+	return (int)(num + strlen(a) + strlen(b) + strlen(c)); 
+}
