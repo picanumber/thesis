@@ -4,7 +4,8 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>99583714-da86-45cf-a0a0-0e6839cc4f4a</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
+    <ProjectHome>
+    </ProjectHome>
     <StartupFile>optimizer.py</StartupFile>
     <SearchPath>
     </SearchPath>

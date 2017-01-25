@@ -20,7 +20,7 @@ static PyObject* objective_function(PyObject *self, PyObject *args, PyObject *ke
 		action, voltage);
 	printf("-- Lovely plumage, the %s -- It's %s!\n", type, state);
 
-	//return PyFloat_FromDouble((double)test_optimizer(voltage, state, action, type)); 
+	return PyFloat_FromDouble((double)test_optimizer(voltage, state, action, type)); 
 
 	Py_RETURN_NONE;
 }
