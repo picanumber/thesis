@@ -3,6 +3,7 @@
 #include <type_traits>
 #include "bmk_utils.h"
 #include "CODEine/benchmark.h"
+#include "function_ref.h"
 
 namespace boost_rtree_experiments
 {
@@ -113,32 +114,37 @@ namespace boost_rtree_experiments
 		}
 	};
 
-	template <class rtree_t, class boxes_t, class time_t, class clock_t>
+	template <class F, class rtree_t, class boxes_t, class time_t, class clock_t>
 	struct query_experiment
 	{
 		using trees_t = std::vector<rtree_t>; 
 
-		rtree_t const*  _rtree;
-		boxes_t const&  _boxes;
-		std::size_t     _numqs;
-		std::size_t     _nhits;
-		trees_t        *_va_capcty_trees;
+		rtree_t const*        _rtree;
+		boxes_t const&        _boxes;
+		std::size_t           _numqs;
+		std::size_t           _nhits;
+		trees_t              *_va_capcty_trees;
+		utl::function_ref<F>  _fun;
 
-		query_experiment(rtree_t const* rtree, boxes_t const& boxes)
+		template <class Op>
+		query_experiment(Op&& fun, rtree_t const* rtree, boxes_t const& boxes)
 			: _rtree(rtree)
 			, _boxes(boxes)
 			, _numqs(0)
 			, _nhits{}
 			, _va_capcty_trees(nullptr)
+			, _fun(std::forward<Op>(fun))
 		{
 		}
 
-		query_experiment(boxes_t const& boxes, std::size_t numqs, trees_t *trees)
+		template <class Op>
+		query_experiment(Op&& fun, boxes_t const& boxes, std::size_t numqs, trees_t *trees)
 			: _rtree(nullptr)
 			, _boxes(boxes)
 			, _numqs(numqs)
 			, _nhits{}
 			, _va_capcty_trees(trees)
+			, _fun(std::forward<Op>(fun))
 		{
 		}
 
@@ -179,7 +185,7 @@ namespace boost_rtree_experiments
 			boxes_t result;
 			for (auto const& win : qs)
 			{
-				rt->query(bgi::intersects(win), std::back_inserter(result));
+				rt->query(_fun(win), std::back_inserter(result));
 			}
 			_nhits += result.size();
 
@@ -201,4 +207,3 @@ namespace boost_rtree_experiments
 		}
 	};
 } // ~ boost_rtree_experiments
-

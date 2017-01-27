@@ -5,7 +5,6 @@
 #include <vector>
 #include <iostream>
 #include <type_traits>
-
 #include <boost/geometry/index/rtree.hpp>
 
 namespace utl
@@ -290,27 +289,3 @@ namespace utl
 		return ret;
 	}
 } // ~utl
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
