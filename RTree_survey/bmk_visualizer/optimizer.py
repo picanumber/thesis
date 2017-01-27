@@ -3,7 +3,6 @@ import optimize_rtree
 
 
 
-
 def main():
     ret = optimize_rtree.objective_function(1, "a", "aa", "a")
     print('function returned {}'.format(ret))

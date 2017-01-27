@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClInclude Include="bmk_utils.h" />
     <ClInclude Include="optimization.h" />
+    <ClInclude Include="rtree_experiments.h" />
     <ClInclude Include="src\high_resolution_timer.hpp" />
     <ClInclude Include="src\spatial_index_benchmark.hpp" />
   </ItemGroup>
