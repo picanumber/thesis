@@ -7,7 +7,7 @@
 #include "bmk_utils.h"
 #include "rtree_experiments.h"
 
-#define FULL_SCALE 0
+#define FULL_SCALE 1
 
 #ifdef _DEBUG
 	#define FACTOR 1

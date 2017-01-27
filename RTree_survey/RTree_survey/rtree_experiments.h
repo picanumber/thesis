@@ -101,7 +101,6 @@ namespace boost_rtree_experiments
 
 				to->tic();
 				auto pr = rtree.parameters().get_max_elements(); 
-				std::cout << (&rtree) << std::endl;
 				_usedTrees->emplace_back(std::move(rtree));
 				assert(pr == _usedTrees->back().parameters().get_max_elements()); 
 				to->toc();
