@@ -20,17 +20,22 @@
 #define QUERY_SZ 10 * FACTOR
 #define XVALS    100 * FACTOR, 200 * FACTOR, 300 * FACTOR, 400 * FACTOR, 500 * FACTOR
 #define MAXCVALS 8, 16, 32
+#define NUM_MAXC 3
 #else
 #define TREE_SZ  1'000'000
 #define QUERY_SZ 100'000
 #define XVALS    100'000, 200'000, 300'000, 400'000, 500'000, 600'000, 700'000, 800'000, 900'000, 1'000'000
 #define MAXCVALS 8, 16, 32, 48, 64, 96, 128, 160, 192, 224, 256
+#define NUM_MAXC 11
 #endif
 
 using namespace utl; 
-using real_secs_t = std::chrono::duration<double, std::ratio<1>>; 
-using bmk_t       = bmk::benchmark<real_secs_t>; 
-namespace bre     = boost_rtree_experiments; 
+using real_secs_t = std::chrono::duration<double, std::ratio<1>>;
+using bmk_t = bmk::benchmark<real_secs_t>;
+namespace bre = boost_rtree_experiments; 
+
+constexpr std::size_t max_capacity = 1024; // TODO: Fix those
+constexpr std::size_t min_capacity = 340;
 
 namespace 
 {
@@ -50,9 +55,6 @@ namespace
 			bmk_t& load_rt, 
 			bmk_t& query_rt)
 	{
-		constexpr std::size_t max_capacity = 1024; // TODO: Fix those
-		constexpr std::size_t min_capacity = 340;
-
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>; 
 		using rtree_t = bgi::rtree<box_t, split_t<max_capacity, min_capacity>>;
@@ -63,7 +65,7 @@ namespace
 		load_ct.run(
 			utl::nameof_split(split), 
 			1, 
-			bre::load_experiment<rtree_t, boxes_t>(boxes, split), 
+			bre::load_experiment<rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(boxes, split),
 			"number of elements", 
 			{ XVALS }
 		);
@@ -74,8 +76,8 @@ namespace
 		query_ct.run(
 			utl::nameof_split(split), 
 			1, 
-			bre::query_experiment<rtree_t, boxes_t,bmk_t::time_t, bmk_t::clock_t>(
-				&subject, boxes, num_queries), 
+			bre::query_experiment<rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+				&subject, boxes), 
 			"number of queries", 
 			{ XVALS }
 		);
@@ -106,16 +108,33 @@ namespace
 		using rtree_t = bgi::rtree<box_t, split_t>;
 
 		std::cout << get_info_header(param, split) << " ====================== BEGIN\n";
+		std::vector<rtree_t> used_rtrees; 
 
 		std::cout << "\tload experiment...\n";
 		load_rt.run(
 			utl::nameof_split(split),
 			1,
-			bre::load_experiment<rtree_t, boxes_t>(boxes, split, query_tree_sz),
+			bre::load_experiment<rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+				boxes, split, query_tree_sz, &used_rtrees),
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
 
+		std::cout << "\tquery experiment...\n";
+		auto vc = [&] {
+			std::vector<std::reference_wrapper<rtree_t>> 
+				tmp(used_rtrees.begin(), used_rtrees.end());
+			return tmp;
+		}();
+
+		query_rt.run(
+			utl::nameof_split(split),
+			1,
+			bre::query_experiment<rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+				boxes, num_queries, &used_rtrees),
+			"max capacity (min capacity = max * 0.5)",
+			{ MAXCVALS }
+		);
 
 		std::cout << get_info_header(param, split) << " ======================== END\n\n";
 		
@@ -194,6 +213,7 @@ int benchmark_boost_rtree()
 
 	bmk_t load_ct, query_ct, load_rt, query_rt; 
 
+	std::cout << "making input...\n"; 
 	std::vector<box_t> boxes = utl::generate_boxes<2, double>(1'000'000, 10); 
 
 	bmk::timeout<std::chrono::minutes> to; 
@@ -209,10 +229,26 @@ int benchmark_boost_rtree()
 
 	std::cout << "testing took " << to.duration().count() << "minutes overall\n"; 
 
-	load_ct.serialize("Loading time: Fixed capacity", "load_ct.txt"); 
-	load_rt.serialize("Loading time: Varying capacity", "load_rt.txt"); 
-	query_ct.serialize("Query time: Fixed capacity", "query_ct.txt"); 
-	query_rt.serialize("Query time: Varying capacity", "query_rt.txt"); 
+	auto tree_sz  = std::to_string(TREE_SZ); 
+	auto query_sz = std::to_string(QUERY_SZ); 
+	auto maxCapty = std::to_string(max_capacity);
+	auto minCapty = std::to_string(min_capacity);
+
+	auto load_ct_name = 
+		"Loading latency: { max capacity = " + maxCapty + ", min capacity = " + minCapty + " }"; 
+	load_ct.serialize(load_ct_name.c_str(), "load_ct.txt"); 
+	
+	auto load_rt_name = "Loading latency: RTree size = " + tree_sz; 
+	load_rt.serialize(load_rt_name.c_str(), "load_rt.txt"); 
+
+	auto query_ct_name = 
+		"Query latency: { RTree size = " + tree_sz + ", max capacity = "
+		+ maxCapty + ", min capacity = " + minCapty + " } "; 
+	query_ct.serialize(query_ct_name.c_str(), "query_ct.txt"); 
+	
+	auto query_rt_name = 
+		"Query latency: { RTree size = " + tree_sz + ", number of queries = " + query_sz + " }";
+	query_rt.serialize(query_rt_name.c_str(), "query_rt.txt"); 
 	
 	std::cout << "\n=======================================================END\n";
 	return 0; 

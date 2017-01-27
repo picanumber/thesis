@@ -76,7 +76,8 @@ def plot_factored_benchmark(bmk, col, syb):
     plt.xlabel(bmk['factor_name'])
     plt.ylabel(bmk['time_type'])
 
-    plt.semilogx(xdata, ydata, syb, color=col, label=bmk['experiment_name'])
+    plt.plot(xdata, ydata, syb, color=col, label=bmk['experiment_name'])
+    #plt.semilogx(xdata, ydata, syb, color=col, label=bmk['experiment_name'])
 
     plt.xticks(xdata, bmk['factors'])
     plt.xlim(min(xdata), max(xdata))

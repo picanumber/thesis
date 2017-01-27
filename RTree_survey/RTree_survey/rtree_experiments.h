@@ -2,22 +2,29 @@
 
 #include <type_traits>
 #include "bmk_utils.h"
+#include "CODEine/benchmark.h"
 
 namespace boost_rtree_experiments
 {
 	using namespace utl; 
 
-	template <class rtree_t, class boxes_t>
+	template <class rtree_t, class boxes_t, class time_t, class clock_t>
 	struct load_experiment
 	{
+		using timeout_ptr_t = bmk::timeout_ptr<time_t, clock_t>; 
+
 		boxes_t const& _boxes;
 		rtree_split const _split;
 		std::size_t const _fixedSz; 
+		std::vector<rtree_t> *_usedTrees; 
 
-		load_experiment(boxes_t const& boxes, rtree_split split, std::size_t fixedSz = 0)
+		load_experiment(
+			boxes_t const& boxes, rtree_split split, 
+			std::size_t fixedSz = 0, std::vector<rtree_t> *usedTrees = nullptr)
 			: _boxes(boxes)
 			, _split(split)
 			, _fixedSz(fixedSz)
+			, _usedTrees(usedTrees)
 		{
 		}
 
@@ -25,6 +32,8 @@ namespace boost_rtree_experiments
 		std::enable_if_t<!has_dynamic_params<rtree_t>::value && std::is_integral<Sz>::value>
 		operator()(Sz numElems)
 		{
+			assert(!_usedTrees); 
+
 			std::size_t ni = 0;
 
 			switch (_split)
@@ -55,9 +64,14 @@ namespace boost_rtree_experiments
 		}
 
 		template <class Sz>
-		std::enable_if_t<has_dynamic_params<rtree_t>::value && std::is_integral<Sz>::value>
+		std::enable_if_t<
+			has_dynamic_params<rtree_t>::value && std::is_integral<Sz>::value, timeout_ptr_t
+		>
 			operator()(Sz max_capacity)
 		{
+			assert(_usedTrees); 
+
+			timeout_ptr_t to = std::make_unique<bmk::timeout<time_t, clock_t>>();
 			std::size_t ni = 0;
 			rtree_split_t<rtree_t> rtree_parameters(max_capacity, Sz(max_capacity * 0.5)); 
 
@@ -71,6 +85,9 @@ namespace boost_rtree_experiments
 				rtree_t rtree(std::cbegin(_boxes), ite, rtree_parameters);
 
 				ni = rtree.size();
+				to->tic(); 
+				_usedTrees->emplace_back(std::move(rtree)); 
+				to->toc(); 
 			}
 			break;
 			default:
@@ -81,64 +98,95 @@ namespace boost_rtree_experiments
 					rtree.insert(_boxes[i]);
 				}
 				ni = rtree.size();
+
+				to->tic();
+				auto pr = rtree.parameters().get_max_elements(); 
+				std::cout << (&rtree) << std::endl;
+				_usedTrees->emplace_back(std::move(rtree));
+				assert(pr == _usedTrees->back().parameters().get_max_elements()); 
+				to->toc();
 			}
 			break;
 			}
 
 			assert(_fixedSz == ni); // also prevents from optimizing away the temp trees
+			return to; 
 		}
 	};
 
 	template <class rtree_t, class boxes_t, class time_t, class clock_t>
 	struct query_experiment
 	{
-		rtree_t const* _rtree;
-		boxes_t const& _boxes;
-		std::size_t    _numqs;
-		std::size_t    _nhits;
+		using trees_t = std::vector<rtree_t>; 
 
-		query_experiment(rtree_t const* rtree, boxes_t const& boxes, std::size_t numqs)
+		rtree_t const*  _rtree;
+		boxes_t const&  _boxes;
+		std::size_t     _numqs;
+		std::size_t     _nhits;
+		trees_t        *_va_capcty_trees;
+
+		query_experiment(rtree_t const* rtree, boxes_t const& boxes)
 			: _rtree(rtree)
 			, _boxes(boxes)
-			, _numqs(numqs)
+			, _numqs(0)
 			, _nhits{}
+			, _va_capcty_trees(nullptr)
 		{
 		}
 
-		query_experiment(boxes_t const& boxes, std::size_t numqs)
+		query_experiment(boxes_t const& boxes, std::size_t numqs, trees_t *trees)
 			: _rtree(nullptr)
 			, _boxes(boxes)
 			, _numqs(numqs)
 			, _nhits{}
+			, _va_capcty_trees(trees)
 		{
 		}
 
 		// this performs only qlimit queries using _rtree
-		bmk::timeout_ptr<time_t, clock_t> operator()(std::size_t qlimit)
+		// this performs _numqs queries using the argument tree
+		// num can either be the qlimit or the capacity
+		bmk::timeout_ptr<time_t, clock_t> operator()(std::size_t num)
 		{
 			bmk::timeout_ptr<time_t, clock_t> to =
 				std::make_unique<bmk::timeout<time_t, clock_t>>();
 
 			to->tic();
-			auto qs = CreateSearchSpace(qlimit);
+			rtree_t const *rt{ nullptr };
+			std::size_t queries_num{ 0 }; 
+			if (_rtree)
+			{
+				rt = _rtree; 
+				queries_num = num; 
+			}
+			else
+			{
+				assert(_va_capcty_trees); 
+				auto it1(_va_capcty_trees->begin()), ite(_va_capcty_trees->end()); 
+				auto it = std::find_if(it1, ite, [&](rtree_t const& val) { 
+					return val.parameters().get_max_elements() == num; 
+				}); 
+				if (it != ite)
+				{
+					rt = &(*it); 
+				}
+				queries_num = _numqs; 
+			}
+			assert(rt); 
+
+			auto qs = CreateSearchSpace(queries_num);
 			to->toc();
 
 			boxes_t result;
 			for (auto const& win : qs)
 			{
-				_rtree->query(bgi::intersects(win), std::back_inserter(result));
+				rt->query(bgi::intersects(win), std::back_inserter(result));
 			}
 			_nhits += result.size();
 
 			return to;
 		}
 
-		// this performs _numqs queries using a new rtree of maxcapacity
-		template <class Rtree>
-		auto operator()(Rtree *rtree)
-		{
-			assert(!_rtree); 
-		}
 	private:
 		auto CreateSearchSpace(std::size_t cardinality)
 		{
