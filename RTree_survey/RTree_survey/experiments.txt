@@ -1,0 +1,204 @@
+Input generation
+----------------
+
+An input of 1'000'000 random boxes is generated. 
+elaborate on the generator and the sparcity of the 
+data
+
+Benchmarks
+----------
+
+***First explain the structure of the benchmarking program***
+
+benchmark class and timeout abstraction
+experiments
+input generation
+cartesian product generation
+abstraction of operations and func ref
+$ custom allocators ?$
+serialization & visualization
+
+--------------------------------------------------------------
+********* load_rt
+--------------------------------------------------------------
+An experiment is run per capacity value for every one of the 
+loading methods. The constructed trees are kept for subsequent
+experiments on query times. 
+
+--------------------------------------------------------------
+*********** query_rt_contains
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+
+--------------------------------------------------------------
+*********** query_rt_covered_by
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+--------------------------------------------------------------
+*********** query_rt_covers
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+--------------------------------------------------------------
+*********** query_rt_disjoint
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+Because the disjoint predicate is bound to be satisfatied for
+a great percentage of the tree entities, roughly N - C, where
+N is the tree size and C the number of entities that satisfy 
+the overlap predicate, we perform a significantly lower number
+of queries. This experiment is considered factorless (there are
+no vaules in the X axis) and all trees (of varying capacity)
+are tested at once for a fixed (lower) number of queries for 
+each construction method
+
+--------------------------------------------------------------
+*********** query_rt_intersects
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+--------------------------------------------------------------
+*********** query_rt_overlaps
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+--------------------------------------------------------------
+*********** query_rt_within
+--------------------------------------------------------------
+- explain the operation
+2nd constuctor of query experiment (store va_capacity_trees
+and number of queries to perform)
+
+The varying capacity trees from the load_rt step are used to perform
+the experiments. A fixed number of queries (shown in the 
+diagram) is performed on every tree. 
+
+--------------------------------------------------------------
+********* load_ct
+--------------------------------------------------------------
+The capacity of the constructed trees is bound at compile time. 
+Hence in this experiment we probe the creation latency of trees
+of various size for the different construction methods. 
+
+An experiment is run per capacity value for every one of the 
+loading methods. The constructed trees are kept for subsequent
+experiments on query times. 
+
+--------------------------------------------------------------
+*********** query_ct_contains
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_contains (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries. 
+
+--------------------------------------------------------------
+*********** query_ct_covered_by
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_covered_by (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries. 
+
+--------------------------------------------------------------
+*********** query_ct_covers
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_covers (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries. 
+
+--------------------------------------------------------------
+*********** query_ct_disjoint
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+A fixed amount of queries is performed on the tree according to 
+the logic described for "query_rt_disjoint". Since it may not 
+be directly obvious from the X-Axis legend, we must stress that
+the benchmark is not to be compared with "query_rt_disjoint" 
+that probs trees of different of varying capacity, but provided
+to compare the relative performance of trees constructed with
+different methods all subject to the same amount of queires. 
+
+To elaborate further on the nature of the experiment the workflow
+goes like this: For each construction method create an rtree of
+a given size. Then, for each constructed tree, perform a fixed
+number of queries based on the "disjoint" predicate. The results
+are visualized as boxe plots since the runtime of this experiment
+is somewhat lower and we perform sampling to achieve noise reduction
+in the results. 
+
+--------------------------------------------------------------
+*********** query_ct_intersects
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_intersects (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries. 
+
+--------------------------------------------------------------
+*********** query_ct_overlaps
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_overlaps (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries.
+
+--------------------------------------------------------------
+*********** query_ct_within
+--------------------------------------------------------------
+1st constructor of query experiment (store a fixed capacity tree)
+
+query_ct_overlaps (ct = queries on trees of compile time bound 
+capacity) reuses a single tree (per construction method). This
+tree is used for a varying number of queries.
+
+
+
+
+
+
+
+

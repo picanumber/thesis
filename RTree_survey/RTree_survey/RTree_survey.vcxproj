@@ -132,6 +132,9 @@
     <ClInclude Include="src\high_resolution_timer.hpp" />
     <ClInclude Include="src\spatial_index_benchmark.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="experiments.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

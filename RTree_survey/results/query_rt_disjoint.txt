@@ -1,0 +1,4 @@
+{ 'benchmark_name' : 'Operation = Disjoint   | query latency: { RTree size = 1000000, number of queries = 100000 }', 'experiment_name' : 'linear', 'time_type' : 'seconds', 'timings' : [ 6.70973 ] } 
+{ 'benchmark_name' : 'Operation = Disjoint   | query latency: { RTree size = 1000000, number of queries = 100000 }', 'experiment_name' : 'quadratic', 'time_type' : 'seconds', 'timings' : [ 6.93692 ] } 
+{ 'benchmark_name' : 'Operation = Disjoint   | query latency: { RTree size = 1000000, number of queries = 100000 }', 'experiment_name' : 'rstar', 'time_type' : 'seconds', 'timings' : [ 6.82487 ] } 
+{ 'benchmark_name' : 'Operation = Disjoint   | query latency: { RTree size = 1000000, number of queries = 100000 }', 'experiment_name' : 'bulk', 'time_type' : 'seconds', 'timings' : [ 5.80326 ] } 

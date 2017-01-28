@@ -7,12 +7,12 @@
 #include "bmk_utils.h"
 #include "rtree_experiments.h"
 
-#define FULL_SCALE 1
-
 #ifdef _DEBUG
 	#define FACTOR 1
+	#define FULL_SCALE 0
 #else
 	#define FACTOR 10
+	#define FULL_SCALE 1
 #endif
 
 #if !FULL_SCALE
@@ -122,12 +122,10 @@ namespace
 		std::cout << "\tbgi::disjoint query experiment...\n";
 		query_ct_disjoint.run(
 			utl::nameof_split(split), 
-			NUM_REPS,
+			10 * NUM_REPS,
 			bre::query_experiment
 			< decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
-				bgi::disjoint<box_t>, &subject, boxes),
-			"number of queries", 
-			{ XVALS }
+				bgi::disjoint<box_t>, &subject, boxes)
 		);
 		
 		std::cout << "\tbgi::intersects query experiment...\n";
@@ -251,12 +249,10 @@ namespace
 		std::cout << "\tbgi::disjoint query experiment...\n";
 		query_rt_disjoint.run(
 			utl::nameof_split(split),
-			NUM_REPS,
+			10 * NUM_REPS,
 			bre::query_experiment
 			<decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
-				bgi::disjoint<box_t>, boxes, num_queries, &used_rtrees),
-			"max capacity (min capacity = max * 0.5)",
-			{ MAXCVALS }
+				bgi::disjoint<box_t>, boxes, 1, &used_rtrees)
 		);
 			
 		std::cout << "\tbgi::intersects query experiment...\n";
@@ -470,21 +466,20 @@ int benchmark_boost_rtree()
 	auto query_rt_name = 
 		"query latency: { RTree size = " + tree_sz + ", number of queries = " + query_sz + " }";
 
-	query_ct_contains  .serialize(("Contains   " + query_ct_name).c_str(), "query_ct_contains.txt");
-	query_ct_covered_by.serialize(("Covered_by " + query_ct_name).c_str(), "query_ct_covered_by.txt");
-	query_ct_covers    .serialize(("Covers     " + query_ct_name).c_str(), "query_ct_covers.txt");
-	query_ct_disjoint  .serialize(("Disjoint   " + query_ct_name).c_str(), "query_ct_disjoint.txt");
-	query_ct_intersects.serialize(("Intersects " + query_ct_name).c_str(), "query_ct_intersects.txt");
-	query_ct_overlaps  .serialize(("Overlaps   " + query_ct_name).c_str(), "query_ct_overlaps.txt");
-	query_ct_within    .serialize(("Within     " + query_ct_name).c_str(), "query_ct_within.txt");
-
-	query_rt_contains  .serialize(("Contains   " + query_rt_name).c_str(), "query_rt_contains.txt");
-	query_rt_covered_by.serialize(("Covered_by " + query_rt_name).c_str(), "query_rt_covered_by.txt");
-	query_rt_covers    .serialize(("Covers     " + query_rt_name).c_str(), "query_rt_covers.txt");
-	query_rt_disjoint  .serialize(("Disjoint   " + query_rt_name).c_str(), "query_rt_disjoint.txt");
-	query_rt_intersects.serialize(("Intersects " + query_rt_name).c_str(), "query_rt_intersects.txt");
-	query_rt_overlaps  .serialize(("Overlaps   " + query_rt_name).c_str(), "query_rt_overlaps.txt");
-	query_rt_within    .serialize(("Within     " + query_rt_name).c_str(), "query_rt_within.txt");
+	query_ct_contains  .serialize(("Operation = Contains   | " + query_ct_name).c_str(), "query_ct_contains.txt");
+	query_ct_covered_by.serialize(("Operation = Covered_by | " + query_ct_name).c_str(), "query_ct_covered_by.txt");
+	query_ct_covers    .serialize(("Operation = Covers     | " + query_ct_name).c_str(), "query_ct_covers.txt");
+	query_ct_disjoint  .serialize(("Operation = Disjoint   | " + query_ct_name).c_str(), "query_ct_disjoint.txt");
+	query_ct_intersects.serialize(("Operation = Intersects | " + query_ct_name).c_str(), "query_ct_intersects.txt");
+	query_ct_overlaps  .serialize(("Operation = Overlaps   | " + query_ct_name).c_str(), "query_ct_overlaps.txt");
+	query_ct_within    .serialize(("Operation = Within     | " + query_ct_name).c_str(), "query_ct_within.txt");
+	query_rt_contains  .serialize(("Operation = Contains   | " + query_rt_name).c_str(), "query_rt_contains.txt");
+	query_rt_covered_by.serialize(("Operation = Covered_by | " + query_rt_name).c_str(), "query_rt_covered_by.txt");
+	query_rt_covers    .serialize(("Operation = Covers     | " + query_rt_name).c_str(), "query_rt_covers.txt");
+	query_rt_disjoint  .serialize(("Operation = Disjoint   | " + query_rt_name).c_str(), "query_rt_disjoint.txt");
+	query_rt_intersects.serialize(("Operation = Intersects | " + query_rt_name).c_str(), "query_rt_intersects.txt");
+	query_rt_overlaps  .serialize(("Operation = Overlaps   | " + query_rt_name).c_str(), "query_rt_overlaps.txt");
+	query_rt_within    .serialize(("Operation = Within     | " + query_rt_name).c_str(), "query_rt_within.txt");
 	
 	std::cout << "\n=======================================================END\n";
 	return 0; 

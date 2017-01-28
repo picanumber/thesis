@@ -151,7 +151,8 @@ namespace boost_rtree_experiments
 		// this performs only qlimit queries using _rtree
 		// this performs _numqs queries using the argument tree
 		// num can either be the qlimit or the capacity
-		bmk::timeout_ptr<time_t, clock_t> operator()(std::size_t num)
+		// TODO: make the default num a distinct mode change signal (e.g. 0)
+		bmk::timeout_ptr<time_t, clock_t> operator()(std::size_t num = 1)
 		{
 			bmk::timeout_ptr<time_t, clock_t> to =
 				std::make_unique<bmk::timeout<time_t, clock_t>>();
@@ -161,8 +162,9 @@ namespace boost_rtree_experiments
 			std::size_t queries_num{ 0 }; 
 			if (_rtree)
 			{
-				rt = _rtree; 
-				queries_num = num; 
+				assert(!_va_capcty_trees);
+				rt = _rtree;
+				queries_num = (1 == num ? 100 : num); 
 			}
 			else
 			{
@@ -175,17 +177,31 @@ namespace boost_rtree_experiments
 				{
 					rt = &(*it); 
 				}
-				queries_num = _numqs; 
+				queries_num = (rt ? 1 : 100) * _numqs; 
 			}
-			assert(rt); 
+			assert(rt || (1 == num)); 
 
 			auto qs = CreateSearchSpace(queries_num);
 			to->toc();
 
 			boxes_t result;
-			for (auto const& win : qs)
+			if (1 == num && _va_capcty_trees)
 			{
-				rt->query(_fun(win), std::back_inserter(result));
+				assert(!rt); 
+				for (auto const& cur_tree : *_va_capcty_trees)
+				{
+					for (auto const& win : qs)
+					{
+						cur_tree.query(_fun(win), std::back_inserter(result));
+					}
+				}
+			}
+			else
+			{
+				for (auto const& win : qs)
+				{
+					rt->query(_fun(win), std::back_inserter(result));
+				}
 			}
 			_nhits += result.size();
 
