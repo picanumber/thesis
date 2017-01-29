@@ -113,7 +113,7 @@ def plot_factored_bmks(factored):
     for bmk in factored:
         plot_factored_benchmark(bmk, next(col), next(syb))
 
-    legend = plt.legend(loc='upper right', shadow=True)
+    legend = plt.legend(loc='upper left', shadow=True)
     #legend.get_frame().set_facecolor('#00FFCC') 
     plt.show()
 # -----------------------------------------------------------------------            

@@ -12,7 +12,7 @@
 	#define FULL_SCALE 0
 #else
 	#define FACTOR 10
-	#define FULL_SCALE 0
+	#define FULL_SCALE 1
 #endif
 
 #if !FULL_SCALE
@@ -451,25 +451,25 @@ int benchmark_boost_rtree()
 
 	std::cout << "testing took " << to.duration().count() << "minutes overall\n"; 
 
-	auto tree_sz  = std::to_string(TREE_SZ); 
-	auto query_sz = std::to_string(QUERY_SZ); 
+	auto tree_sz  = utl::to_short_string(TREE_SZ); 
+	auto query_sz = utl::to_short_string(QUERY_SZ); 
 	auto maxCapty = std::to_string(max_capacity);
 	auto minCapty = std::to_string(min_capacity);
 	
 	//std::locale my_loc(std::locale::classic(), new split_every_three);
 
 	auto load_ct_name = 
-		"Loading latency: { max capacity = " + maxCapty + ", min capacity = " + minCapty + " }"; 
+		"Loading latency \nmax capacity = " + maxCapty + ", min capacity = " + minCapty; 
 	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt"); 
 	
 	auto load_rt_name = "Loading latency: RTree size = " + tree_sz; 
 	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt"); 
 
 	auto q_ct_name = 
-		"query latency: { RTree size = " + tree_sz + ", max capacity = "
-		+ maxCapty + ", min capacity = " + minCapty + " } "; 
+		"query latency \nRTree size = " + tree_sz + ", max capacity = "
+		+ maxCapty + ", min capacity = " + minCapty; 
 	auto q_rt_name = 
-		"query latency: { RTree size = " + tree_sz + ", number of queries = " + query_sz + " }";
+		"query latency \nRTree size = " + tree_sz + ", number of queries = " + query_sz;
 
 	auto knn_name = "Operation = kNN, k = " + std::to_string(nn) + " | "; 
 

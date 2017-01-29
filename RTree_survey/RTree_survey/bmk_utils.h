@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 #include <locale>
+#include <iomanip>
 #include <iostream>
 #include <type_traits>
 #include <boost/geometry/index/rtree.hpp>
@@ -38,6 +39,27 @@ namespace utl
 			return "\03"; 
 		}
 	};
+
+	template <class Num>
+	std::string to_short_string(Num num, std::streamsize sz = 4)
+	{
+		std::stringstream ss; 
+		
+		if (num > 1'000'000)
+		{
+			ss << std::setprecision(sz) << (num / 1'000'000.) << 'M'; 
+		}
+		else if (num > 1'000)
+		{
+			ss << std::setprecision(sz) << (num / 1'000.) << 'K';
+		}
+		else
+		{
+			ss << std::setprecision(sz) << num; 
+		}
+
+		return ss.str(); 
+	}
 
 	// --------------------------------------------------------------------------------------------
 	// ----------------------------------------------------------------------------- type utilities
