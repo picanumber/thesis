@@ -18,6 +18,7 @@ namespace utl
 	// --------------------------------------------------------------- constants & related printing
 	enum class rtree_param : int { run_time, compile_time };
 	enum class rtree_split : int { linear, quadratic, rstar, bulk };
+	enum class input_maker : int { from_file, rand_gen }; 
 
 	std::string nameof_param(rtree_param param);
 	std::string nameof_split(rtree_split split);
@@ -45,11 +46,11 @@ namespace utl
 	{
 		std::stringstream ss; 
 		
-		if (num > 1'000'000)
+		if (num >= 1'000'000)
 		{
 			ss << std::setprecision(sz) << (num / 1'000'000.) << 'M'; 
 		}
-		else if (num > 1'000)
+		else if (num >= 1'000)
 		{
 			ss << std::setprecision(sz) << (num / 1'000.) << 'K';
 		}
@@ -69,6 +70,9 @@ namespace utl
 	struct inner_pt<bg::model::box<bg::model::point<coord_t, D, bg::cs::cartesian>>>
 	{
 		using type = bg::model::point<coord_t, D, bg::cs::cartesian>;
+
+		constexpr static std::size_t dim = D; 
+		using coord_type = coord_t; 
 	};
 
 	template <class B>
@@ -332,4 +336,8 @@ namespace utl
 
 		return ret;
 	}
+
+	// --------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------- shapefile reading
+	std::vector<box_type<2, double>> read_from_shapefile(std::string const& filename); 
 } // ~utl

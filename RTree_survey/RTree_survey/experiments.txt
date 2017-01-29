@@ -11,7 +11,7 @@ Benchmarks
 ***First explain the structure of the benchmarking program***
 
 benchmark class and timeout abstraction
-experiments
+experiments / explain why we use query iterators
 input generation
 cartesian product generation
 abstraction of operations and func ref

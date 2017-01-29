@@ -20,6 +20,7 @@
 #define TREE_SZ  100 * FACTOR
 #define QUERY_SZ 10 * FACTOR
 #define XVALS    100 * FACTOR, 200 * FACTOR, 300 * FACTOR, 400 * FACTOR, 500 * FACTOR
+#define XVALSF   100 * FACTOR, 200 * FACTOR, 300 * FACTOR, 400 * FACTOR, 500 * FACTOR
 #define MAXCVALS 8, 16, 32
 #define NUM_MAXC 3
 #else
@@ -27,6 +28,7 @@
 #define TREE_SZ  1'000'000
 #define QUERY_SZ 100'000
 #define XVALS    100'000, 200'000, 300'000, 400'000, 500'000, 600'000, 700'000, 800'000, 900'000, 1'000'000
+#define XVALSF   20'000, 40'000, 60'000, 80'000, 100'000, 120'000, 140'000, 160'000, 180'000, 200'000
 #define MAXCVALS 8, 16, 32, 48, 64, 96, 128, 160, 192, 224, 256
 #define NUM_MAXC 11
 #endif
@@ -75,21 +77,22 @@ namespace
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>; 
 		using rtree_t = bgi::rtree<box_t, split_t<max_capacity, min_capacity>>;
+		using ilist_t = std::initializer_list<std::size_t>; 
 
 		std::cout << get_info_header(param, split) << " ====================== BEGIN\n"; 
 
 		std::cout << "\tload experiment...\n"; 
 		load_ct.run(
-			utl::nameof_split(split), 
+			utl::nameof_split(split),
 			NUM_REPS,
 			bre::load_experiment<rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(boxes, split),
-			"number of elements", 
-			{ XVALS }
+			"number of elements",
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
 		);
 
 		auto subject = make_rtree<rtree_t>(split, boxes, query_tree_sz);
 
-		std::cout << "\tbgi::contains query experiment...\n";
+		std::cout << "\tbgi::contains query experiment... ";
 		query_ct_contains.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -97,10 +100,12 @@ namespace
 			<decltype(bgi::contains<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::contains<box_t>, &subject, boxes),
 			"number of queries",
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::covered_by query experiment...\n";
+		std::cout << "\tbgi::covered_by query experiment... ";
 		query_ct_covered_by.run(
 			utl::nameof_split(split), 
 			NUM_REPS,
@@ -108,10 +113,12 @@ namespace
 			<decltype(bgi::covered_by<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::covered_by<box_t>, &subject, boxes),
 			"number of queries", 
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::covers query experiment...\n";
+		std::cout << "\tbgi::covers query experiment... ";
 		query_ct_covers.run(
 			utl::nameof_split(split), 
 			NUM_REPS,
@@ -119,10 +126,12 @@ namespace
 			<decltype(bgi::covers<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::covers<box_t>, &subject, boxes),
 			"number of queries", 
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::disjoint query experiment...\n";
+		std::cout << "\tbgi::disjoint query experiment... ";
 		query_ct_disjoint.run(
 			utl::nameof_split(split), 
 			10 * NUM_REPS,
@@ -130,8 +139,9 @@ namespace
 			<decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::disjoint<box_t>, &subject, boxes)
 		);
-		
-		std::cout << "\tbgi::intersects query experiment...\n";
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
+
+		std::cout << "\tbgi::intersects query experiment... ";
 		query_ct_intersects.run(
 			utl::nameof_split(split), 
 			NUM_REPS,
@@ -139,10 +149,12 @@ namespace
 			<decltype(bgi::intersects<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::intersects<box_t>, &subject, boxes), 
 			"number of queries", 
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }			
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::overlaps query experiment...\n";
+		std::cout << "\tbgi::overlaps query experiment... ";
 		query_ct_overlaps.run(
 			utl::nameof_split(split), 
 			NUM_REPS,
@@ -150,10 +162,12 @@ namespace
 			<decltype(bgi::overlaps<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::overlaps<box_t>, &subject, boxes),
 			"number of queries", 
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::within query experiment...\n";
+		std::cout << "\tbgi::within query experiment... ";
 		query_ct_within.run(
 			utl::nameof_split(split), 
 			NUM_REPS,
@@ -161,10 +175,12 @@ namespace
 			<decltype(bgi::within<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::within<box_t>, &subject, boxes),
 			"number of queries", 
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::knn query experiment...\n";
+		std::cout << "\tbgi::knn query experiment... ";
 		query_ct_nearest.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -172,8 +188,10 @@ namespace
 			<decltype(utl::knn<nn, box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				utl::knn<nn, box_t>, &subject, boxes),
 			"number of queries",
-			{ XVALS }
+			std::move(TREE_SZ == query_tree_sz ? ilist_t{ XVALS } : ilist_t{ XVALSF })
+			//{ XVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
 		std::cout << get_info_header(param, split) << " ======================== END\n\n";
 
@@ -227,7 +245,7 @@ namespace
 			{ MAXCVALS }
 		);
 
-		std::cout << "\tbgi::contains query experiment...\n";
+		std::cout << "\tbgi::contains query experiment... ";
 		query_rt_contains.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -237,8 +255,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::covered_by query experiment...\n";
+		std::cout << "\tbgi::covered_by query experiment... ";
 		query_rt_covered_by.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -248,8 +267,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::covers query experiment...\n";
+		std::cout << "\tbgi::covers query experiment... ";
 		query_rt_covers.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -259,8 +279,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::disjoint query experiment...\n";
+		std::cout << "\tbgi::disjoint query experiment... ";
 		query_rt_disjoint.run(
 			utl::nameof_split(split),
 			10 * NUM_REPS,
@@ -268,8 +289,9 @@ namespace
 			<decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::disjoint<box_t>, boxes, 1, &used_rtrees)
 		);
-			
-		std::cout << "\tbgi::intersects query experiment...\n";
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
+
+		std::cout << "\tbgi::intersects query experiment... ";
 		query_rt_intersects.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -279,8 +301,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::overlaps query experiment...\n";
+		std::cout << "\tbgi::overlaps query experiment... ";
 		query_rt_overlaps.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -290,8 +313,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::within query experiment...\n";
+		std::cout << "\tbgi::within query experiment... ";
 		query_rt_within.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -301,8 +325,9 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
-		std::cout << "\tbgi::knn query experiment...\n";
+		std::cout << "\tbgi::knn query experiment... ";
 		query_rt_nearest.run(
 			utl::nameof_split(split),
 			NUM_REPS,
@@ -312,6 +337,7 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
+		std::cout << "# hits = " << bre::im_sorry << std::endl;
 
 		std::cout << get_info_header(param, split) << " ======================== END\n\n";
 		
@@ -419,6 +445,20 @@ const std::vector<rtree_split> split_vs{
 	rtree_split::bulk
 }; 
 
+template <std::size_t D, class coord_t>
+std::vector<utl::box_type<2, double>> generate_input(input_maker method)
+{
+	switch (method)
+	{
+	case utl::input_maker::from_file:
+		return utl::read_from_shapefile("../shape_eg_data/gadm28.shp");
+	case utl::input_maker::rand_gen:
+		return utl::generate_boxes<D, coord_t>(1'000'000, 10); 
+	default:
+		return{}; 
+	}
+}
+
 int benchmark_boost_rtree()
 {
 	typedef bg::model::point<double, 2, bg::cs::cartesian> point_t;
@@ -433,7 +473,10 @@ int benchmark_boost_rtree()
 		q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest;
 
 	std::cout << "making input...\n"; 
-	std::vector<box_t> boxes = utl::generate_boxes<2, double>(1'000'000, 10); 
+	std::vector<box_t> boxes = generate_input<2, double>(input_maker::from_file);
+	std::size_t tree_size  = TREE_SZ > boxes.size() ? boxes.size() : TREE_SZ; 
+	std::size_t query_size = QUERY_SZ > tree_size ? 
+		std::min(std::size_t{ 1'000 }, boxes.size()) : QUERY_SZ;
 
 	bmk::timeout<std::chrono::minutes> to; 
 	to.tic(); 
@@ -441,7 +484,7 @@ int benchmark_boost_rtree()
 	{
 		do_rtree_bmk(
 			std::get<0>(params), std::get<1>(params),
-			boxes, TREE_SZ, QUERY_SZ, load_ct, load_rt,
+			boxes, tree_size, query_size, load_ct, load_rt,
 			q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
 			q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
 			q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
@@ -451,44 +494,39 @@ int benchmark_boost_rtree()
 
 	std::cout << "testing took " << to.duration().count() << "minutes overall\n"; 
 
-	auto tree_sz  = utl::to_short_string(TREE_SZ); 
-	auto query_sz = utl::to_short_string(QUERY_SZ); 
+	auto tree_sz  = utl::to_short_string(tree_size);
+	auto query_sz = utl::to_short_string(query_size);
 	auto maxCapty = std::to_string(max_capacity);
 	auto minCapty = std::to_string(min_capacity);
 	
 	//std::locale my_loc(std::locale::classic(), new split_every_three);
 
-	auto load_ct_name = 
-		"Loading latency \nmax capacity = " + maxCapty + ", min capacity = " + minCapty; 
+	auto load_ct_name = "Loading latency: nodes = " + maxCapty + " / " + minCapty; 
 	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt"); 
 	
 	auto load_rt_name = "Loading latency: RTree size = " + tree_sz; 
 	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt"); 
 
-	auto q_ct_name = 
-		"query latency \nRTree size = " + tree_sz + ", max capacity = "
-		+ maxCapty + ", min capacity = " + minCapty; 
-	auto q_rt_name = 
-		"query latency \nRTree size = " + tree_sz + ", number of queries = " + query_sz;
+	auto q_ct_name = "RTree size = " + tree_sz + ", nodes = " + maxCapty + " / " + minCapty;
+	auto q_rt_name = "RTree size = " + tree_sz + ", queries = " + query_sz;
+	auto knn_name = "kNN, k = " + std::to_string(nn) + " | ";
 
-	auto knn_name = "Operation = kNN, k = " + std::to_string(nn) + " | "; 
-
-	q_ct_contains  .serialize(("Operation = Contains   | " + q_ct_name).c_str(), "results/q_ct_contains.txt");
-	q_ct_covered_by.serialize(("Operation = Covered_by | " + q_ct_name).c_str(), "results/q_ct_covered_by.txt");
-	q_ct_covers    .serialize(("Operation = Covers     | " + q_ct_name).c_str(), "results/q_ct_covers.txt");
-	q_ct_disjoint  .serialize(("Operation = Disjoint   | " + q_ct_name).c_str(), "results/q_ct_disjoint.txt");
-	q_ct_intersects.serialize(("Operation = Intersects | " + q_ct_name).c_str(), "results/q_ct_intersects.txt");
-	q_ct_overlaps  .serialize(("Operation = Overlaps   | " + q_ct_name).c_str(), "results/q_ct_overlaps.txt");
-	q_ct_within    .serialize(("Operation = Within     | " + q_ct_name).c_str(), "results/q_ct_within.txt");
-	q_ct_nearest   .serialize((knn_name                    + q_ct_name).c_str(), "results/q_ct_kNN.txt");
-	q_rt_contains  .serialize(("Operation = Contains   | " + q_rt_name).c_str(), "results/q_rt_contains.txt");
-	q_rt_covered_by.serialize(("Operation = Covered_by | " + q_rt_name).c_str(), "results/q_rt_covered_by.txt");
-	q_rt_covers    .serialize(("Operation = Covers     | " + q_rt_name).c_str(), "results/q_rt_covers.txt");
-	q_rt_disjoint  .serialize(("Operation = Disjoint   | " + q_rt_name).c_str(), "results/q_rt_disjoint.txt");
-	q_rt_intersects.serialize(("Operation = Intersects | " + q_rt_name).c_str(), "results/q_rt_intersects.txt");
-	q_rt_overlaps  .serialize(("Operation = Overlaps   | " + q_rt_name).c_str(), "results/q_rt_overlaps.txt");
-	q_rt_within    .serialize(("Operation = Within     | " + q_rt_name).c_str(), "results/q_rt_within.txt");
-	q_rt_nearest   .serialize((knn_name                    + q_rt_name).c_str(), "results/q_rt_kNN.txt");
+	q_ct_contains  .serialize(("Contains | "   + q_ct_name).c_str(), "results/q_ct_contains.txt");
+	q_ct_covered_by.serialize(("Covered_by | " + q_ct_name).c_str(), "results/q_ct_covered_by.txt");
+	q_ct_covers    .serialize(("Covers | "     + q_ct_name).c_str(), "results/q_ct_covers.txt");
+	q_ct_disjoint  .serialize(("Disjoint | "   + q_ct_name).c_str(), "results/q_ct_disjoint.txt");
+	q_ct_intersects.serialize(("Intersects | " + q_ct_name).c_str(), "results/q_ct_intersects.txt");
+	q_ct_overlaps  .serialize(("Overlaps | "   + q_ct_name).c_str(), "results/q_ct_overlaps.txt");
+	q_ct_within    .serialize(("Within | "     + q_ct_name).c_str(), "results/q_ct_within.txt");
+	q_ct_nearest   .serialize((knn_name        + q_ct_name).c_str(), "results/q_ct_kNN.txt");
+	q_rt_contains  .serialize(("Contains | "   + q_rt_name).c_str(), "results/q_rt_contains.txt");
+	q_rt_covered_by.serialize(("Covered_by | " + q_rt_name).c_str(), "results/q_rt_covered_by.txt");
+	q_rt_covers    .serialize(("Covers | "     + q_rt_name).c_str(), "results/q_rt_covers.txt");
+	q_rt_disjoint  .serialize(("Disjoint | "   + q_rt_name).c_str(), "results/q_rt_disjoint.txt");
+	q_rt_intersects.serialize(("Intersects | " + q_rt_name).c_str(), "results/q_rt_intersects.txt");
+	q_rt_overlaps  .serialize(("Overlaps | "   + q_rt_name).c_str(), "results/q_rt_overlaps.txt");
+	q_rt_within    .serialize(("Within | "     + q_rt_name).c_str(), "results/q_rt_within.txt");
+	q_rt_nearest   .serialize((knn_name        + q_rt_name).c_str(), "results/q_rt_kNN.txt");
 
 	std::cout << "\n=======================================================END\n";
 	return 0; 

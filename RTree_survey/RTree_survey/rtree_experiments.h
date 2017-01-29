@@ -9,6 +9,8 @@ namespace boost_rtree_experiments
 {
 	using namespace utl; 
 
+	std::size_t im_sorry; 
+
 	template <class rtree_t, class boxes_t, class time_t, class clock_t>
 	struct load_experiment
 	{
@@ -135,6 +137,7 @@ namespace boost_rtree_experiments
 			, _va_capcty_trees(nullptr)
 			, _fun(std::forward<Op>(fun))
 		{
+			im_sorry = 0; 
 		}
 
 		template <class Op>
@@ -146,6 +149,7 @@ namespace boost_rtree_experiments
 			, _va_capcty_trees(trees)
 			, _fun(std::forward<Op>(fun))
 		{
+			im_sorry = 0;
 		}
 
 		// this performs only qlimit queries using _rtree
@@ -182,6 +186,7 @@ namespace boost_rtree_experiments
 			assert(rt || (1 == num)); 
 
 			auto qs = CreateSearchSpace(queries_num);
+			assert(!qs.empty()); 
 			to->toc();
 
 			boxes_t result;
@@ -192,7 +197,11 @@ namespace boost_rtree_experiments
 				{
 					for (auto const& win : qs)
 					{
-						cur_tree.query(_fun(win), std::back_inserter(result));
+						//cur_tree.query(_fun(win), std::back_inserter(result));
+						for (auto it = cur_tree.qbegin(_fun(win)); it != cur_tree.qend(); ++it)
+						{
+							++_nhits; 
+						}
 					}
 				}
 			}
@@ -200,10 +209,14 @@ namespace boost_rtree_experiments
 			{
 				for (auto const& win : qs)
 				{
-					rt->query(_fun(win), std::back_inserter(result));
+					//rt->query(_fun(win), std::back_inserter(result));
+					for (auto it = rt->qbegin(_fun(win)); it != rt->qend(); ++it)
+					{
+						++_nhits;
+					}
 				}
 			}
-			_nhits += result.size();
+			im_sorry = _nhits; 
 
 			return to;
 		}
@@ -211,15 +224,29 @@ namespace boost_rtree_experiments
 	private:
 		auto CreateSearchSpace(std::size_t cardinality)
 		{
+			using box_t = std::decay_t<boxes_t>::value_type; 
+#if 0
 			boxes_t ret;
 			ret.reserve(cardinality);
-
 			for (size_t i = 0; i < cardinality; i++)
 			{
 				ret.emplace_back(utl::bloat_box(_boxes[i], 10));
 			}
-
 			return ret;
+#elif 0
+			return utl::generate_boxes<
+				utl::inner_pt<box_t>::dim, utl::inner_pt<box_t>::coord_type>(cardinality); 
+#else
+			boxes_t ret(cardinality); 
+
+			box_t cur(_boxes[cardinality]); 
+			//while (--cardinality)
+			//{
+			//	bg::expand(cur, _boxes[cardinality]); 
+			//}
+			std::fill(ret.begin(), ret.end(), cur); 
+			return ret; // TODO: why is this not OK boxes_t(cardinality, cur); ? 
+#endif // 0
 		}
 	};
 } // ~ boost_rtree_experiments
