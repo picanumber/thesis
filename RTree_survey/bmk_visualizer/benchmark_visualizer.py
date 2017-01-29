@@ -42,6 +42,22 @@ def get_numeric_list(any_list):
         else: ret_list.append(elem)
 
     return ret_list
+# -----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------   
+def get_description_list(any_list):
+    """ Gets a list of strings out of a list of numbers or strings
+    """ 
+    ret_list = []
+    for elem in any_list:
+        if isinstance(elem, int):          
+            if elem >= 1000000: val = '{}M'.format(elem / 1000000.)
+            elif elem >= 1000: val = '{}K'.format(elem / 1000.)
+            else: val = '{}'.format(elem)
+            ret_list.append(val)
+        else: ret_list.append(elem)
+
+    return ret_list
 # -----------------------------------------------------------------------            
 
 # -----------------------------------------------------------------------            
@@ -71,6 +87,7 @@ def plot_factored_benchmark(bmk, col, syb):
     """ bmk is a dictionary
     """
     xdata = get_numeric_list(bmk['factors'])
+    xlegend = get_description_list(bmk['factors'])
     ydata = bmk['timings']
 
     plt.xlabel(bmk['factor_name'])
@@ -79,7 +96,8 @@ def plot_factored_benchmark(bmk, col, syb):
     plt.plot(xdata, ydata, syb, color=col, label=bmk['experiment_name'])
     #plt.semilogx(xdata, ydata, syb, color=col, label=bmk['experiment_name'])
 
-    plt.xticks(xdata, bmk['factors'])
+    #plt.xticks(xdata, bmk['factors'])
+    plt.xticks(xdata, xlegend)
     plt.xlim(min(xdata), max(xdata))
     
 def plot_factored_bmks(factored):

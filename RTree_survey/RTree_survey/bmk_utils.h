@@ -3,6 +3,7 @@
 #include <tuple>
 #include <random>
 #include <vector>
+#include <locale>
 #include <iostream>
 #include <type_traits>
 #include <boost/geometry/index/rtree.hpp>
@@ -24,6 +25,19 @@ namespace utl
 	std::ostream& operator<<(std::ostream& os, rtree_split split);
 
 	std::string get_info_header(rtree_param param, rtree_split split);
+
+	class split_every_three : public std::numpunct<char>
+	{
+	protected:
+		virtual char do_thousands_sep() const 
+		{ 
+			return '\''; 
+		}
+		virtual std::string do_grouping() const 
+		{ 
+			return "\03"; 
+		}
+	};
 
 	// --------------------------------------------------------------------------------------------
 	// ----------------------------------------------------------------------------- type utilities
@@ -79,6 +93,14 @@ namespace utl
 
 	template <class rtree_t>
 	using rtree_box_t = typename has_dynamic_params<rtree_t>::box_type;
+
+	// --------------------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------ geometric utilities
+	template <unsigned K, class Geometry>
+	auto knn(Geometry const& g) -> decltype(bgi::nearest(g, K))
+	{
+		return bgi::nearest(g, K); 
+	}
 
 	// --------------------------------------------------------------------------------------------
 	// ------------------------------------------------------------------------------------- makers

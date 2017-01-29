@@ -12,7 +12,7 @@
 	#define FULL_SCALE 0
 #else
 	#define FACTOR 10
-	#define FULL_SCALE 1
+	#define FULL_SCALE 0
 #endif
 
 #if !FULL_SCALE
@@ -38,6 +38,7 @@ namespace bre = boost_rtree_experiments;
 
 constexpr std::size_t max_capacity = 1024; // TODO: Fix those
 constexpr std::size_t min_capacity = 340;
+constexpr unsigned nn = 10;
 
 namespace 
 {
@@ -61,13 +62,15 @@ namespace
 			bmk_t& query_ct_intersects,
 			bmk_t& query_ct_overlaps,
 			bmk_t& query_ct_within,
+			bmk_t& query_ct_nearest,
 			bmk_t& query_rt_contains,
 			bmk_t& query_rt_covered_by,
 			bmk_t& query_rt_covers,
 			bmk_t& query_rt_disjoint,
 			bmk_t& query_rt_intersects,
 			bmk_t& query_rt_overlaps,
-			bmk_t& query_rt_within)
+			bmk_t& query_rt_within,
+			bmk_t& query_rt_nearest)
 	{
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>; 
@@ -91,7 +94,7 @@ namespace
 			utl::nameof_split(split),
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::contains<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::contains<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::contains<box_t>, &subject, boxes),
 			"number of queries",
 			{ XVALS }
@@ -102,7 +105,7 @@ namespace
 			utl::nameof_split(split), 
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::covered_by<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::covered_by<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::covered_by<box_t>, &subject, boxes),
 			"number of queries", 
 			{ XVALS }
@@ -113,7 +116,7 @@ namespace
 			utl::nameof_split(split), 
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::covers<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::covers<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::covers<box_t>, &subject, boxes),
 			"number of queries", 
 			{ XVALS }
@@ -124,7 +127,7 @@ namespace
 			utl::nameof_split(split), 
 			10 * NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::disjoint<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::disjoint<box_t>, &subject, boxes)
 		);
 		
@@ -133,7 +136,7 @@ namespace
 			utl::nameof_split(split), 
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::intersects<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::intersects<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::intersects<box_t>, &subject, boxes), 
 			"number of queries", 
 			{ XVALS }
@@ -144,7 +147,7 @@ namespace
 			utl::nameof_split(split), 
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::overlaps<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::overlaps<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::overlaps<box_t>, &subject, boxes),
 			"number of queries", 
 			{ XVALS }
@@ -155,9 +158,20 @@ namespace
 			utl::nameof_split(split), 
 			NUM_REPS,
 			bre::query_experiment
-			< decltype(bgi::within<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+			<decltype(bgi::within<box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
 				bgi::within<box_t>, &subject, boxes),
 			"number of queries", 
+			{ XVALS }
+		);
+
+		std::cout << "\tbgi::knn query experiment...\n";
+		query_ct_nearest.run(
+			utl::nameof_split(split),
+			NUM_REPS,
+			bre::query_experiment
+			<decltype(utl::knn<nn, box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+				utl::knn<nn, box_t>, &subject, boxes),
+			"number of queries",
 			{ XVALS }
 		);
 
@@ -186,13 +200,15 @@ namespace
 			bmk_t& query_ct_intersects,
 			bmk_t& query_ct_overlaps,
 			bmk_t& query_ct_within,
+			bmk_t& query_ct_nearest,
 			bmk_t& query_rt_contains,
 			bmk_t& query_rt_covered_by,
 			bmk_t& query_rt_covers,
 			bmk_t& query_rt_disjoint,
 			bmk_t& query_rt_intersects,
 			bmk_t& query_rt_overlaps,
-			bmk_t& query_rt_within)
+			bmk_t& query_rt_within, 
+			bmk_t& query_rt_nearest)
 	{
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>;
@@ -210,8 +226,6 @@ namespace
 			"max capacity (min capacity = max * 0.5)",
 			{ MAXCVALS }
 		);
-
-		std::vector<std::reference_wrapper<rtree_t>> vc(used_rtrees.begin(), used_rtrees.end());
 
 		std::cout << "\tbgi::contains query experiment...\n";
 		query_rt_contains.run(
@@ -288,6 +302,17 @@ namespace
 			{ MAXCVALS }
 		);
 
+		std::cout << "\tbgi::knn query experiment...\n";
+		query_rt_nearest.run(
+			utl::nameof_split(split),
+			NUM_REPS,
+			bre::query_experiment
+			<decltype(utl::knn<nn, box_t>), rtree_t, boxes_t, bmk_t::time_t, bmk_t::clock_t>(
+				utl::knn<nn, box_t>, boxes, num_queries, &used_rtrees),
+			"max capacity (min capacity = max * 0.5)",
+			{ MAXCVALS }
+		);
+
 		std::cout << get_info_header(param, split) << " ======================== END\n\n";
 		
 		return 0;
@@ -309,14 +334,16 @@ int do_rtree_bmk(
 	bmk_t& query_ct_disjoint, 
 	bmk_t& query_ct_intersects, 
 	bmk_t& query_ct_overlaps, 
-	bmk_t& query_ct_within, 
+	bmk_t& query_ct_within,
+	bmk_t& query_ct_nearest,
 	bmk_t& query_rt_contains, 
 	bmk_t& query_rt_covered_by, 
 	bmk_t& query_rt_covers, 
 	bmk_t& query_rt_disjoint, 
 	bmk_t& query_rt_intersects, 
 	bmk_t& query_rt_overlaps, 
-	bmk_t& query_rt_within)
+	bmk_t& query_rt_within,
+	bmk_t& query_rt_nearest)
 {
 	switch (param)
 	{
@@ -327,24 +354,24 @@ int do_rtree_bmk(
 		case rtree_split::linear: 
 			return bmk_impl<rtree_param::run_time, bgi::dynamic_linear>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint, 
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint, 
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		case rtree_split::quadratic:
 			return bmk_impl<rtree_param::run_time, bgi::dynamic_quadratic>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint,
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint,
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		case rtree_split::rstar:
 			return bmk_impl<rtree_param::run_time, bgi::dynamic_rstar>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint,
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint,
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		default:
 			return 1; 
 		}
@@ -355,24 +382,24 @@ int do_rtree_bmk(
 		case rtree_split::linear:
 			return bmk_impl<rtree_param::compile_time, bgi::linear>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint,
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint,
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		case rtree_split::quadratic:
 			return bmk_impl<rtree_param::compile_time, bgi::quadratic>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint,
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint,
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		case rtree_split::rstar:
 			return bmk_impl<rtree_param::compile_time, bgi::rstar>(
 				split, boxes, qtree_sz, nqueries, load_ct, load_rt,
-				query_ct_contains, query_ct_covered_by, query_ct_covers,
-				query_ct_disjoint, query_ct_intersects, query_ct_overlaps, query_ct_within,
-				query_rt_contains, query_rt_covered_by, query_rt_covers,
-				query_rt_disjoint, query_rt_intersects, query_rt_overlaps, query_rt_within);
+				query_ct_contains, query_ct_covered_by, query_ct_covers, query_ct_disjoint,
+				query_ct_intersects, query_ct_overlaps, query_ct_within, query_ct_nearest,
+				query_rt_contains, query_rt_covered_by, query_rt_covers, query_rt_disjoint,
+				query_rt_intersects, query_rt_overlaps, query_rt_within, query_rt_nearest);
 		default:
 			return 1;
 		}
@@ -399,23 +426,11 @@ int benchmark_boost_rtree()
 
 	std::cout << "BEGIN=====================================================\n\n";
 
-	bmk_t
-		load_ct,
-		load_rt,
-		query_ct_contains,
-		query_ct_covered_by,
-		query_ct_covers,
-		query_ct_disjoint,
-		query_ct_intersects,
-		query_ct_overlaps,
-		query_ct_within,
-		query_rt_contains,
-		query_rt_covered_by,
-		query_rt_covers,
-		query_rt_disjoint,
-		query_rt_intersects,
-		query_rt_overlaps,
-		query_rt_within; 
+	bmk_t load_ct,load_rt,
+		q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+		q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+		q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+		q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest;
 
 	std::cout << "making input...\n"; 
 	std::vector<box_t> boxes = utl::generate_boxes<2, double>(1'000'000, 10); 
@@ -426,23 +441,11 @@ int benchmark_boost_rtree()
 	{
 		do_rtree_bmk(
 			std::get<0>(params), std::get<1>(params),
-			boxes, TREE_SZ, QUERY_SZ,
-			load_ct,
-			load_rt,
-			query_ct_contains,
-			query_ct_covered_by,
-			query_ct_covers,
-			query_ct_disjoint,
-			query_ct_intersects,
-			query_ct_overlaps,
-			query_ct_within,
-			query_rt_contains,
-			query_rt_covered_by,
-			query_rt_covers,
-			query_rt_disjoint,
-			query_rt_intersects,
-			query_rt_overlaps,
-			query_rt_within); 
+			boxes, TREE_SZ, QUERY_SZ, load_ct, load_rt,
+			q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+			q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+			q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+			q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest);
 	}
 	to.toc(); 
 
@@ -452,35 +455,41 @@ int benchmark_boost_rtree()
 	auto query_sz = std::to_string(QUERY_SZ); 
 	auto maxCapty = std::to_string(max_capacity);
 	auto minCapty = std::to_string(min_capacity);
+	
+	//std::locale my_loc(std::locale::classic(), new split_every_three);
 
 	auto load_ct_name = 
 		"Loading latency: { max capacity = " + maxCapty + ", min capacity = " + minCapty + " }"; 
-	load_ct.serialize(load_ct_name.c_str(), "load_ct.txt"); 
+	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt"); 
 	
 	auto load_rt_name = "Loading latency: RTree size = " + tree_sz; 
-	load_rt.serialize(load_rt_name.c_str(), "load_rt.txt"); 
+	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt"); 
 
-	auto query_ct_name = 
+	auto q_ct_name = 
 		"query latency: { RTree size = " + tree_sz + ", max capacity = "
 		+ maxCapty + ", min capacity = " + minCapty + " } "; 
-	auto query_rt_name = 
+	auto q_rt_name = 
 		"query latency: { RTree size = " + tree_sz + ", number of queries = " + query_sz + " }";
 
-	query_ct_contains  .serialize(("Operation = Contains   | " + query_ct_name).c_str(), "query_ct_contains.txt");
-	query_ct_covered_by.serialize(("Operation = Covered_by | " + query_ct_name).c_str(), "query_ct_covered_by.txt");
-	query_ct_covers    .serialize(("Operation = Covers     | " + query_ct_name).c_str(), "query_ct_covers.txt");
-	query_ct_disjoint  .serialize(("Operation = Disjoint   | " + query_ct_name).c_str(), "query_ct_disjoint.txt");
-	query_ct_intersects.serialize(("Operation = Intersects | " + query_ct_name).c_str(), "query_ct_intersects.txt");
-	query_ct_overlaps  .serialize(("Operation = Overlaps   | " + query_ct_name).c_str(), "query_ct_overlaps.txt");
-	query_ct_within    .serialize(("Operation = Within     | " + query_ct_name).c_str(), "query_ct_within.txt");
-	query_rt_contains  .serialize(("Operation = Contains   | " + query_rt_name).c_str(), "query_rt_contains.txt");
-	query_rt_covered_by.serialize(("Operation = Covered_by | " + query_rt_name).c_str(), "query_rt_covered_by.txt");
-	query_rt_covers    .serialize(("Operation = Covers     | " + query_rt_name).c_str(), "query_rt_covers.txt");
-	query_rt_disjoint  .serialize(("Operation = Disjoint   | " + query_rt_name).c_str(), "query_rt_disjoint.txt");
-	query_rt_intersects.serialize(("Operation = Intersects | " + query_rt_name).c_str(), "query_rt_intersects.txt");
-	query_rt_overlaps  .serialize(("Operation = Overlaps   | " + query_rt_name).c_str(), "query_rt_overlaps.txt");
-	query_rt_within    .serialize(("Operation = Within     | " + query_rt_name).c_str(), "query_rt_within.txt");
-	
+	auto knn_name = "Operation = kNN, k = " + std::to_string(nn) + " | "; 
+
+	q_ct_contains  .serialize(("Operation = Contains   | " + q_ct_name).c_str(), "results/q_ct_contains.txt");
+	q_ct_covered_by.serialize(("Operation = Covered_by | " + q_ct_name).c_str(), "results/q_ct_covered_by.txt");
+	q_ct_covers    .serialize(("Operation = Covers     | " + q_ct_name).c_str(), "results/q_ct_covers.txt");
+	q_ct_disjoint  .serialize(("Operation = Disjoint   | " + q_ct_name).c_str(), "results/q_ct_disjoint.txt");
+	q_ct_intersects.serialize(("Operation = Intersects | " + q_ct_name).c_str(), "results/q_ct_intersects.txt");
+	q_ct_overlaps  .serialize(("Operation = Overlaps   | " + q_ct_name).c_str(), "results/q_ct_overlaps.txt");
+	q_ct_within    .serialize(("Operation = Within     | " + q_ct_name).c_str(), "results/q_ct_within.txt");
+	q_ct_nearest   .serialize((knn_name                    + q_ct_name).c_str(), "results/q_ct_kNN.txt");
+	q_rt_contains  .serialize(("Operation = Contains   | " + q_rt_name).c_str(), "results/q_rt_contains.txt");
+	q_rt_covered_by.serialize(("Operation = Covered_by | " + q_rt_name).c_str(), "results/q_rt_covered_by.txt");
+	q_rt_covers    .serialize(("Operation = Covers     | " + q_rt_name).c_str(), "results/q_rt_covers.txt");
+	q_rt_disjoint  .serialize(("Operation = Disjoint   | " + q_rt_name).c_str(), "results/q_rt_disjoint.txt");
+	q_rt_intersects.serialize(("Operation = Intersects | " + q_rt_name).c_str(), "results/q_rt_intersects.txt");
+	q_rt_overlaps  .serialize(("Operation = Overlaps   | " + q_rt_name).c_str(), "results/q_rt_overlaps.txt");
+	q_rt_within    .serialize(("Operation = Within     | " + q_rt_name).c_str(), "results/q_rt_within.txt");
+	q_rt_nearest   .serialize((knn_name                    + q_rt_name).c_str(), "results/q_rt_kNN.txt");
+
 	std::cout << "\n=======================================================END\n";
 	return 0; 
 }

@@ -164,7 +164,7 @@ namespace boost_rtree_experiments
 			{
 				assert(!_va_capcty_trees);
 				rt = _rtree;
-				queries_num = (1 == num ? 100 : num); 
+				queries_num = (1 == num ? 10 : num); 
 			}
 			else
 			{
@@ -177,7 +177,7 @@ namespace boost_rtree_experiments
 				{
 					rt = &(*it); 
 				}
-				queries_num = (rt ? 1 : 100) * _numqs; 
+				queries_num = (rt ? 1 : 10) * _numqs; 
 			}
 			assert(rt || (1 == num)); 
 
