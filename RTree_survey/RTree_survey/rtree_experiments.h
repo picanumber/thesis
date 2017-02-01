@@ -5,6 +5,8 @@
 #include "CODEine/benchmark.h"
 #include "function_ref.h"
 
+#define USE_Q_ITER 0
+
 namespace boost_rtree_experiments
 {
 	using namespace utl; 
@@ -187,9 +189,11 @@ namespace boost_rtree_experiments
 
 			auto qs = CreateSearchSpace(queries_num);
 			assert(!qs.empty()); 
-			to->toc();
 
 			boxes_t result;
+			result.reserve(1'000'000); 
+			to->toc();
+
 			if (1 == num && _va_capcty_trees)
 			{
 				assert(!rt); 
@@ -197,11 +201,16 @@ namespace boost_rtree_experiments
 				{
 					for (auto const& win : qs)
 					{
-						//cur_tree.query(_fun(win), std::back_inserter(result));
+#if USE_Q_ITER
 						for (auto it = cur_tree.qbegin(_fun(win)); it != cur_tree.qend(); ++it)
 						{
 							++_nhits; 
 						}
+#else
+						cur_tree.query(_fun(win), std::back_inserter(result));
+						_nhits += result.size(); 
+						result.clear(); 
+#endif
 					}
 				}
 			}
@@ -209,11 +218,16 @@ namespace boost_rtree_experiments
 			{
 				for (auto const& win : qs)
 				{
-					//rt->query(_fun(win), std::back_inserter(result));
+#if USE_Q_ITER
 					for (auto it = rt->qbegin(_fun(win)); it != rt->qend(); ++it)
 					{
 						++_nhits;
 					}
+#else
+					rt->query(_fun(win), std::back_inserter(result));
+					_nhits += result.size();
+					result.clear();
+#endif
 				}
 			}
 			im_sorry = _nhits; 
@@ -225,7 +239,7 @@ namespace boost_rtree_experiments
 		auto CreateSearchSpace(std::size_t cardinality)
 		{
 			using box_t = std::decay_t<boxes_t>::value_type; 
-#if 0
+#if 1
 			boxes_t ret;
 			ret.reserve(cardinality);
 			for (size_t i = 0; i < cardinality; i++)

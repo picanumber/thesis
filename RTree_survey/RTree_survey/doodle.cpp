@@ -44,4 +44,6 @@ int _main()
 
 
 	bm.serialize("convert num 2 str", "test.txt");
+
+	return 0;
 }
