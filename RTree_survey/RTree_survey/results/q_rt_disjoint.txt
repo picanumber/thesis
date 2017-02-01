@@ -1,4 +1,0 @@
-{ 'benchmark_name' : 'Disjoint | RTree size = 243.2K, queries = 100K', 'experiment_name' : 'linear', 'time_type' : 'seconds', 'timings' : [ 0.365529, 0.357378, 0.363607, 0.359177, 0.364254, 0.358363, 0.35807, 0.361166, 0.359107, 0.359595 ] } 
-{ 'benchmark_name' : 'Disjoint | RTree size = 243.2K, queries = 100K', 'experiment_name' : 'quadratic', 'time_type' : 'seconds', 'timings' : [ 0.37016, 0.3753, 0.367109, 0.373703, 0.369591, 0.37367, 0.365692, 0.369035, 0.372256, 0.368891 ] } 
-{ 'benchmark_name' : 'Disjoint | RTree size = 243.2K, queries = 100K', 'experiment_name' : 'rstar', 'time_type' : 'seconds', 'timings' : [ 0.363118, 0.354788, 0.357685, 0.359607, 0.357277, 0.363948, 0.358066, 0.365047, 0.360972, 0.35793 ] } 
-{ 'benchmark_name' : 'Disjoint | RTree size = 243.2K, queries = 100K', 'experiment_name' : 'bulk', 'time_type' : 'seconds', 'timings' : [ 0.23679, 0.234888, 0.241052, 0.231011, 0.235004, 0.237453, 0.236765, 0.234167, 0.238339, 0.235309 ] } 

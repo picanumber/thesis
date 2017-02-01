@@ -138,6 +138,7 @@
     <ClCompile Include="..\shapelib\shpopen.c" />
     <ClCompile Include="benchmark_boost_rtree.cpp" />
     <ClCompile Include="bmk_utils.cpp" />
+    <ClCompile Include="doodle.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="optimization.cpp" />
     <ClCompile Include="src\benchmark_boost_geometry.cpp" />

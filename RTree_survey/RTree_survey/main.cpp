@@ -1,16 +1,13 @@
 #include <iostream>
 
-#include <boost/geometry.hpp>
-
-
-extern int benchmark_boost_geometry(); 
 extern int benchmark_boost_rtree(); 
-
-
 
 int main(int argc, char *argv[])
 {
-	//benchmark_boost_geometry(); 
+	int k;
+	std::cout << "waiting for you to set the affinity\n";
+	std::cin >> k;
+
 	benchmark_boost_rtree(); 
 
 	system("PAUSE"); 

@@ -221,9 +221,9 @@ namespace utl
 
 			using result_type = typename distribution_t::result_type;
 
-			std::random_device                rd;
-			std::mt19937                      gen;
-			std::uniform_real_distribution<T> dis;
+			std::random_device rd;
+			std::mt19937       gen;
+			distribution_t     dis;
 
 			random_generator(T width, bool steady = true)
 				: rd{}
@@ -243,10 +243,10 @@ namespace utl
 			{
 				return dis(gen);
 			}
-
-			random_generator(random_generator const&) = delete;
-			random_generator(random_generator&&) = delete;
-			random_generator& operator=(random_generator const&) = delete;
+			
+			random_generator(random_generator<T> const&) = delete;
+			random_generator(random_generator<T>&&) = delete;
+			random_generator& operator=(random_generator<T> const&) = delete;
 		};
 	} // ~ detail
 
