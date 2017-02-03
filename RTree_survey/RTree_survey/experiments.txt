@@ -200,3 +200,22 @@ tree is used for a varying number of queries.
 
 
 
+load_ct
+load_rt
+q_ct_contains
+q_ct_covered_by
+q_ct_covers
+q_ct_disjoint
+q_ct_intersects
+q_ct_kNN
+q_ct_overlaps
+q_ct_within
+q_rt_contains
+q_rt_covered_by
+q_rt_covers
+q_rt_disjoint
+q_rt_intersects
+q_rt_kNN
+q_rt_overlaps
+q_rt_within
+

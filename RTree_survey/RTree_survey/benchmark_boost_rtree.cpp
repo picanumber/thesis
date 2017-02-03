@@ -473,7 +473,7 @@ int benchmark_boost_rtree()
 		q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest;
 
 	std::cout << "making input...\n"; 
-	auto input_method = input_maker::from_file; 
+	auto input_method = input_maker::from_file;
 	std::vector<box_t> boxes = generate_input<2, double>(input_method);
 	std::size_t tree_size  = TREE_SZ > boxes.size() ? boxes.size() : TREE_SZ; 
 	std::size_t query_size = input_method == input_maker::from_file ?
