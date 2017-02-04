@@ -24,7 +24,7 @@
 #define MAXCVALS 8, 16, 32
 #define NUM_MAXC 3
 #else
-#define NUM_REPS 10
+#define NUM_REPS 1
 #define TREE_SZ  1'000'000
 #define QUERY_SZ 100'000
 #define XVALS    100'000, 200'000, 300'000, 400'000, 500'000, 600'000, 700'000, 800'000, 900'000, 1'000'000
@@ -476,8 +476,8 @@ int benchmark_boost_rtree()
 	auto input_method = input_maker::from_file;
 	std::vector<box_t> boxes = generate_input<2, double>(input_method);
 	std::size_t tree_size  = TREE_SZ > boxes.size() ? boxes.size() : TREE_SZ; 
-	std::size_t query_size = input_method == input_maker::from_file ?
-		std::min(std::size_t{ 10'000 }, boxes.size()) : QUERY_SZ;
+	std::size_t query_size = QUERY_SZ; /* input_method == input_maker::from_file ?
+		std::min(std::size_t{ 10'000 }, boxes.size()) : QUERY_SZ;*/
 
 	bmk::timeout<std::chrono::minutes> to; 
 	to.tic(); 

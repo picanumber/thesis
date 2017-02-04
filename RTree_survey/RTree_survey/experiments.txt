@@ -199,7 +199,6 @@ tree is used for a varying number of queries.
 
 
 
-
 load_ct
 load_rt
 q_ct_contains

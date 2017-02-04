@@ -5,7 +5,7 @@
 #include "CODEine/benchmark.h"
 #include "function_ref.h"
 
-#define USE_Q_ITER 0
+#define USE_Q_ITER 1
 
 namespace boost_rtree_experiments
 {
