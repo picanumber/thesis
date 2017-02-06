@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9f9b4d59-77ba-4b28-8d53-6888bf27568c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>optimizer.py</StartupFile>
+    <StartupFile>tester.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -25,9 +25,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="optimizer.py" />
+    <Compile Include="tester.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\2.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\optimize_rtree\optimize_rtree.vcxproj">
+      <Name>optimize_rtree</Name>
+      <Project>{f7deaad6-f3d3-4cdc-9777-4afaaadc49dd}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -6,7 +6,8 @@
     <ProjectGuid>99583714-da86-45cf-a0a0-0e6839cc4f4a</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>optimizer.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,9 +25,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="benchmark_visualizer.py" />
-    <Compile Include="optimizer.py">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="..\x64\Release\optimize_rtree.pyd">

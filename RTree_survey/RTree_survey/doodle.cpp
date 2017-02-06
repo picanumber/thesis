@@ -47,3 +47,28 @@ int _main()
 
 	return 0;
 }
+
+
+#if 0
+// exporting from cpp for Python3
+PyMethodDef OptRtreeMethods[] =
+{
+	{ "objective_function", (PyCFunction)objective_function, METH_VARARGS | METH_KEYWORDS, "Definition of the objective function" },
+	{ NULL, NULL, 0, NULL } // sentinel 
+};
+
+static struct PyModuleDef optimize_rtreemodule =
+{
+	PyModuleDef_HEAD_INIT,
+	"optimize_rtree",                   /* name of module */
+	"Optimization of rtree parameters", /* module documentation, may be NULL */
+	-1,                                 /* size of per-interpreter state of the module,
+										or -1 if the module keeps state in global variables. */
+	OptRtreeMethods
+};
+
+PyMODINIT_FUNC PyInit_optimize_rtree(void)
+{
+	return PyModule_Create(&optimize_rtreemodule);
+}
+#endif // 0

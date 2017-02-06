@@ -91,7 +91,7 @@ void read_shapefile(const std::string& filename, std::vector<T>& polygons, F fun
 		double adfMinBound[4], adfMaxBound[4];
 		SHPGetInfo(handle, &nEntities, &nShapeType, adfMinBound, adfMaxBound);
 
-		std::cout << "Number of entities " << nEntities << std::endl;
+		//std::cout << "Number of entities " << nEntities << std::endl;
 		for (int i = 0; i < nEntities; i++)
 		{
 			SHPObject* psShape = SHPReadObject(handle, i);
