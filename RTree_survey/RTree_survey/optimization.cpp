@@ -3,6 +3,7 @@
 #include <cassert>
 #include <stdio.h>
 #include <vector>
+#include <string>
 #include <CODEine/benchmark.h>
 #include "bmk_utils.h"
 #include <boost/geometry/index/rtree.hpp>
@@ -40,6 +41,64 @@ namespace
 		}
 		
 		return ret;
+	}
+
+	std::string dataset_name(int dataset)
+	{
+		switch (dataset)
+		{
+			case DATASET_REAL2D: return "DATASET_REAL2D"; 
+			case DATASET_SYTH2D: return "DATASET_SYTH2D"; 
+			case DATASET_REAL3D: return "DATASET_REAL3D"; 
+			case DATASET_SYTH3D: return "DATASET_SYTH3D"; 
+		}
+		return "DATASET_?"; 
+	}
+
+	std::string query_name(int qType)
+	{
+		switch (qType)
+		{
+		case Q_WITHIN: return "Q_WITHIN";
+		case Q_CONTAINS: return "Q_CONTAINS";
+		case Q_COVERED_BY: return "Q_COVERED_BY";
+		case Q_COVERS: return "Q_COVERS";
+		case Q_DISJOINT: return "Q_DISJOINT";
+		case Q_INTERSECTS: return "Q_INTERSECTS";
+		case Q_KNN: return "Q_KNN";
+		case Q_OVERLAPS: return "Q_OVERLAPS";
+		}
+		return "Q_?"; 
+	}
+
+	std::string split_name(int splitType)
+	{
+		switch (splitType)
+		{
+		case LOAD_LIN: return "LOAD_LIN";
+		case LOAD_QDRT: return "LOAD_QDRT";
+		case LOAD_RSTAR: return "LOAD_RSTAR";
+		case LOAD_BULK: return "LOAD_BULK";
+		}
+		return "LOAD_?";
+	}
+
+	void print_input_set(
+		int dataset, int numElems, int numQs, int qType,
+		int minNodes, int maxNodes, int splitType)
+	{
+		std::cout << "\n==========================================================\n"; 
+		std::cout << "\t\tR-tree optimization\n----------------------------------------------------------\n";
+
+		std::cout << "{  " << dataset_name(dataset) << ", " << split_name(splitType) << ", "
+			<< numElems << ":" << numQs << ", " << query_name(qType) << " }\n";
+		std::cout << "{ " << minNodes << ", " << maxNodes << " }\n"; 
+
+		if (2 * minNodes > maxNodes)
+		{
+			std::cout << "\tthis will fail : (m <= M/2)\n"; 
+		}
+		std::cout << "----------------------------------------------------------\n";
 	}
 }
 
@@ -153,35 +212,43 @@ int run_rtree_operations(
 	int dataset, int numElems, int numQs, int qType, // parameters that set the problem
 	int minNodes, int maxNodes, int splitType)       // parameters to optimize
 {
+	print_input_set(dataset, numElems, numQs, qType, minNodes, maxNodes, splitType); 
 
-	auto input_method = (DATASET_REAL2D == dataset) ?
-		input_maker::from_file : input_maker::rand_gen;
-
-	std::vector<std::chrono::milliseconds> timings; 
-
-	std::vector<box_t> boxes = make_input<2, double>(input_method);
-	std::vector<box_t> qboxs = CreateSearchSpace(boxes, (std::size_t)numQs); 
-
-	for (size_t i = 0; i < 10; i++)
+	try
 	{
-		switch (splitType)
+		auto input_method = (DATASET_REAL2D == dataset) ?
+			input_maker::from_file : input_maker::rand_gen;
+
+		std::vector<std::chrono::milliseconds> timings;
+
+		std::vector<box_t> boxes = make_input<2, double>(input_method);
+		std::vector<box_t> qboxs = CreateSearchSpace(boxes, (std::size_t)numQs);
+
+		for (size_t i = 0; i < 10; i++)
 		{
-		case LOAD_BULK:
-			timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_linear>>(
-				rtree_split::bulk, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
-		case LOAD_LIN:
-			timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_linear>>(
-				rtree_split::linear, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
-		case LOAD_QDRT:
-			timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_quadratic>>(
-				rtree_split::quadratic, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
-		case LOAD_RSTAR:
-			timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_rstar>>(
-				rtree_split::rstar, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
+			switch (splitType)
+			{
+			case LOAD_BULK:
+				timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_linear>>(
+					rtree_split::bulk, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
+			case LOAD_LIN:
+				timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_linear>>(
+					rtree_split::linear, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
+			case LOAD_QDRT:
+				timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_quadratic>>(
+					rtree_split::quadratic, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
+			case LOAD_RSTAR:
+				timings.push_back(run_experiment<bgi::rtree<box_t, bgi::dynamic_rstar>>(
+					rtree_split::rstar, boxes, qboxs, numElems, minNodes, maxNodes, numQs, qType));
+			}
 		}
+
+		auto it_min = std::min_element(timings.begin(), timings.end());
+
+		return it_min->count();
 	}
-
-	auto it_min = std::min_element(timings.begin(), timings.end()); 
-
-	return it_min->count(); 
+	catch (const std::exception&)
+	{
+		return -1; 
+	}
 }

@@ -1,25 +1,13 @@
-#!/usr/bin/env python
-'''
-Solves Schittkowski's TP37 Constrained Problem.
-
-    min 	-x1*x2*x3
-    s.t.:	x1 + 2.*x2 + 2.*x3 - 72 <= 0
-            - x1 - 2.*x2 - 2.*x3 <= 0
-            0 <= xi <= 42,  i = 1,2,3
-    
-    f* = -3456 , x* = [24, 12, 12]
-'''
-
 # =============================================================================
 # Standard Python modules
 # =============================================================================
 import os, sys, time
 import pdb
+import time
 
 # =============================================================================
 # Extension modules
 # =============================================================================
-#from pyOpt import *
 from pyOpt import Optimization
 from pyOpt import PSQP
 from pyOpt import SLSQP
@@ -29,96 +17,106 @@ from pyOpt import SOLVOPT
 from pyOpt import KSOPT
 from pyOpt import NSGA2
 from pyOpt import ALGENCAN
-#from pyOpt import FILTERSD
+import optimize_rtree
+from pyswarm import pso
 
-
-# =============================================================================
-# 
-# =============================================================================
-def objfunc(x):
-    
-    f = -x[0]*x[1]*x[2]
-    g = [0.0]*2
-    g[0] = x[0] + 2.*x[1] + 2.*x[2] - 72.0
-    g[1] = -x[0] - 2.*x[1] - 2.*x[2]
-    
-    fail = 0
-    return f,g, fail
-    
+used_solutions = {}
 
 # =============================================================================
 # 
 # =============================================================================
+def get_objective_func(dataset, numElems, numQs, qType):
+    """
+    dataset  : one of ['real2d', 'syth2d', 'real3d', 'syth3d']
+    numElems : the population of the rtree
+    numQs    : the number of queries
+    qType    : ['within', 'contains', 'covered_by', 'covers', 'disjoint', 
+                'intersects', 'knn', 'overlaps']
+    """
+    ds_num = {
+        'real2d' : 1, 'syth2d' : 2, 'real3d' : 3, 'syth3d' : 4
+    }[dataset]
 
-# Instantiate Optimization Problem 
-opt_prob = Optimization('TP37 Constrained Problem',objfunc)
-opt_prob.addVar('x1','c',lower=0.0,upper=42.0,value=10.0)
-opt_prob.addVar('x2','c',lower=0.0,upper=42.0,value=10.0)
-opt_prob.addVar('x3','c',lower=0.0,upper=42.0,value=10.0)
-opt_prob.addObj('f')
-opt_prob.addCon('g1','i')
-opt_prob.addCon('g2','i')
-print opt_prob
+    query = {
+        'within' : 0, 'contains' : 1, 'covered_by' : 2, 'covers' : 3,
+        'disjoint' : 4, 'intersects' : 5, 'knn' : 6, 'overlaps' : 7
+    }[qType]
 
-# Instantiate Optimizer (PSQP) & Solve Problem
-psqp = PSQP()
-psqp.setOption('IPRINT',0)
-psqp(opt_prob,sens_type='FD')
-print opt_prob.solution(0)
+    def rtree_load_and_query(x, *args, **kwargs): 
+        """
+        x[2] = split type : { 1 : 'lin', 2 : 'qdrt', 3 : 'rstar', 4 : 'bulk' }
+        """
+        x1 = int(x[1])
+        x0 = int(x[0] * x1)
+        if x0 < 1: x0 = 1
 
-# Instantiate Optimizer (SLSQP) & Solve Problem
-slsqp = SLSQP()
-slsqp.setOption('IPRINT',-1)
-slsqp(opt_prob,sens_type='FD')
-print opt_prob.solution(1)
+        a = '{}:{}'.format(x0, x1)
+        if a in used_solutions:
+            print 'reusing solution ({}, {}) for ({}, {})'.format(x0, x1, x[0], x[1])
+            return used_solutions[a]
 
-# Instantiate Optimizer (CONMIN) & Solve Problem
-conmin = CONMIN()
-conmin.setOption('IPRINT',0)
-conmin(opt_prob,sens_type='CS')
-print opt_prob.solution(2)
+        f = optimize_rtree.objective_function(dataset=ds_num, numElems=numElems, 
+                                              numQs=numQs, qType=query, 
+                                              minNodes=x0, maxNodes=x1, splitType=1)#x[2])
+        #g = [2 * x[0] - x[1]]
+        #
+        #fail = 0
+        #return 0, g, fail
+        if f < 0: # TODO: make constraints work
+            print 'somebody failed, f returned -1'
+            f = 100000
+        
+        used_solutions[a] = f 
+        return f
 
-# Instantiate Optimizer (COBYLA) & Solve Problem
-cobyla = COBYLA()
-cobyla.setOption('IPRINT',0)
-cobyla(opt_prob)
-print opt_prob.solution(3)
+    return rtree_load_and_query
 
-# Instantiate Optimizer (SOLVOPT) & Solve Problem
-solvopt = SOLVOPT()
-solvopt.setOption('iprint',-1)
-solvopt(opt_prob,sens_type='FD')
-print opt_prob.solution(4)
+# =============================================================================
+# 
+# =============================================================================
+def con(x):
+    return [2 * x[0] - x[1]]
 
-# Instantiate Optimizer (KSOPT) & Solve Problem
-ksopt = KSOPT()
-ksopt.setOption('IPRINT',0)
-ksopt(opt_prob,sens_type='FD')
-print opt_prob.solution(5)
+# =============================================================================
+# 
+# =============================================================================
+def solve_optimization_problem(dataset, rtree_size, query_size, query): 
+    """
+    creates the objective function and optimization problem
+    """
+    objfunc = get_objective_func('syth2d', 50000, 10000, 'within')
+    ## print objfunc([8, 16, 'lin'])
+    #opt_prob = Optimization('R-tree optimization', objfunc)
+    #opt_prob.addVar('minNodes', 'c', lower=2., upper=4., value=2.)
+    #opt_prob.addVar('maxNodes', 'c', lower=4., upper=8., value=4.)
+    ##opt_prob.addVar('split_type', 'd', choices = [1, 2, 3, 4])
+    #opt_prob.addObj('minimize latency')
+    #opt_prob.addCon('2 * minNodes <= maxNodes','i')
+    #print opt_prob
+    #
+    #psqp = PSQP()
+    #psqp.setOption('IPRINT',0)
+    #psqp(opt_prob,sens_type='FD')
+    #print opt_prob.solution(0)
+    lb = [0.1, 4]
+    ub = [0.5, 128]
+    xopt, fopt = pso(objfunc, lb, ub)
+    print xopt
+    print fopt
+    
 
-# Instantiate Optimizer (NSGA2) & Solve Problem
-nsga2 = NSGA2()
-nsga2.setOption('PrintOut',0)
-nsga2(opt_prob)
-print opt_prob.solution(6)
+# =============================================================================
+# 
+# =============================================================================
+def main():
+    """entry point for the application"""
+    solve_optimization_problem('real2d', 50000, 10000, 'within')
 
-# Instantiate Optimizer (ALGENCAN) & Solve Problem
-algencan = ALGENCAN()
-algencan.setOption('iprint',0)
-algencan(opt_prob)
-print opt_prob.solution(7)
-
-# Instantiate Optimizer (FILTERSD) & Solve Problem
-# filtersd = FILTERSD()
-# filtersd.setOption('iprint',0)
-# filtersd(opt_prob)
-# print opt_prob.solution(8)
-
-from pyOpt import MIDACO
-midaco = MIDACO()
-midaco.setOption('IPRINT', 0)
-midaco(opt_prob)
-print opt_prob.solution(8)
+# =============================================================================
+if __name__ == '__main__':
+    start = time.time()
+    main()
+    print 'It took', time.time()-start, 'seconds.'
 
 
 
