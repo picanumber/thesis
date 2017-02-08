@@ -47,7 +47,7 @@ def get_objective_func(dataset, numElems, numQs, qType):
         x[2] = split type : { 1 : 'lin', 2 : 'qdrt', 3 : 'rstar', 4 : 'bulk' }
         """
         x1 = int(x[1])
-        x0 = int(x[0] * x1)
+        x0 = int(0.1 * x[0] * x1)
         if x0 < 1: x0 = 1
 
         a = '{}:{}'.format(x0, x1)
@@ -98,9 +98,9 @@ def solve_optimization_problem(dataset, rtree_size, query_size, query):
     #psqp.setOption('IPRINT',0)
     #psqp(opt_prob,sens_type='FD')
     #print opt_prob.solution(0)
-    lb = [0.1, 4]
-    ub = [0.5, 128]
-    xopt, fopt = pso(objfunc, lb, ub)
+    lb = [1, 4]
+    ub = [5, 128]
+    xopt, fopt = pso(objfunc, lb, ub, minstep = 1)
     print xopt
     print fopt
     

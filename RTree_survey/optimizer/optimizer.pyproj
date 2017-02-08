@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9f9b4d59-77ba-4b28-8d53-6888bf27568c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>optimizer.py</StartupFile>
+    <StartupFile>parallel_pyswarm_optimizer.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,6 +26,12 @@
   <ItemGroup>
     <Compile Include="examples.py" />
     <Compile Include="optimizer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="parallel_pyswarm_optimizer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pyswarm_optimizer.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="tester.py">
