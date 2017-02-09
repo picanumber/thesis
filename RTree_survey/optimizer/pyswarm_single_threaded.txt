@@ -1,6 +1,6 @@
 
 
-	*** R-tree optimization with pyswarm ***
+	*** R-tree optimization with pyswarm (0.0 minutes) ***
 
 =========================================================
 dataset=real2d, numElems=50000, numQs=10000, qType=within

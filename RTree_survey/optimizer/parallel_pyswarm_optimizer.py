@@ -29,7 +29,7 @@ def get_min_nodes(min_node_perc, max_nodes):
     return x0
 
 # =============================================================================
-def print_header(dataset, numElems, numQs, qType, filename):
+def print_header(dataset, numElems, numQs, qType, filename, minutes):
     """ prints info on the experiment in filename 
     """
     info = 'dataset={}, numElems={}, numQs={}, qType={}\n'.format(
@@ -37,7 +37,9 @@ def print_header(dataset, numElems, numQs, qType, filename):
     subscr = '=' * (len(info) - 1)
 
     with open(filename, 'w') as outfile: 
-        outfile.write('\n\n\t*** R-tree optimization with pyswarm ***\n\n')
+        outfile.write(
+            '\n\n\t*** R-tree optimization with pyswarm ({} minutes) ***\n\n'.
+            format(minutes))
         outfile.write(subscr + '\n')
         outfile.write(info)
         outfile.write(subscr + '\n\n')
@@ -120,35 +122,36 @@ class optimization_task(multiprocessing.Process):
 # =============================================================================
 def multi_threaded(dataset, numElems, numQs, qType, filename):
     """ calls the optimization tasks in parallel """ 
+    start = time.time()
+    
+    # 1. 
     q = Queue()
-    processes = []
-    
-    for i, split in zip(range(4), ['lin', 'qdrt', 'rstar', 'bulk']): 
-        processes.append(optimization_task(i, dataset, numElems, numQs, qType, q))
-        processes[-1].set_split(split)
+    processes = [optimization_task(i, dataset, numElems, numQs, qType, q) for i in range(4)]
+    [p.set_split(split) for p, split in zip(processes, ['lin', 'qdrt', 'rstar', 'bulk'])]
 
+    # 2. 
     [p.start() for p in processes]    
-    
-    print_header(dataset, numElems, numQs, qType, filename)
-    # append results
-    for p in processes:
-        p.join()
-        with open(filename, 'a') as outfile:
-            outfile.write(q.get() + '\n')
-        
+    [p.join() for p in processes]
+
+    secs = time.time() - start
+
+    # 3. 
+    print_header(dataset, numElems, numQs, qType, filename, (secs // 60))
+    with open(filename, 'a') as outfile:
+        while not q.empty(): outfile.write(q.get() + '\n')
+
     return 0
 
 # =============================================================================
 def main():
     # TODO: command line arguments should control these
+    #multi_threaded('syth2d', 500, 100, 'within', 'pyswarm_multithreaded.txt'); 
     multi_threaded('syth2d', 50000, 10000, 'within', 'pyswarm_multithreaded.txt'); 
 
 # =============================================================================
 if __name__ == '__main__':
-    start = time.time()
+    raw_input("Press Enter to proceed...")
     main()
-    secs = time.time()-start
-    print 'Optimization duration: ', (secs / 60.), ' minutes.'
 
 
 

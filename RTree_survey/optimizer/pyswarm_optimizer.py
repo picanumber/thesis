@@ -26,7 +26,7 @@ def get_min_nodes(min_node_perc, max_nodes):
     return x0
 
 # =============================================================================
-def print_header(dataset, numElems, numQs, qType, filename):
+def print_header(dataset, numElems, numQs, qType, filename, minutes):
     """ prints info on the experiment in filename 
     """
     info = 'dataset={}, numElems={}, numQs={}, qType={}\n'.format(
@@ -34,7 +34,9 @@ def print_header(dataset, numElems, numQs, qType, filename):
     subscr = '=' * (len(info) - 1)
 
     with open(filename, 'w') as outfile: 
-        outfile.write('\n\n\t*** R-tree optimization with pyswarm ***\n\n')
+        outfile.write(
+            '\n\n\t*** R-tree optimization with pyswarm ({} minutes) ***\n\n'.
+            format(minutes))
         outfile.write(subscr + '\n')
         outfile.write(info)
         outfile.write(subscr + '\n\n')
@@ -109,11 +111,15 @@ def solve_optimization_problem(
 # =============================================================================
 def single_threaded(dataset, numElems, numQs, qType, filename):
     """entry point for the application"""
+    start = time.time()
+
     lts = [] # list of tuples
     for split in ['lin', 'qdrt', 'rstar', 'bulk']: 
         lts.append(solve_optimization_problem(dataset, numElems, numQs, qType, split))
 
-    print_header(dataset, numElems, numQs, qType, filename)
+    secs = time.time() - start
+
+    print_header(dataset, numElems, numQs, qType, filename, (secs // 60))
     with open(filename, 'a') as outfile:
         for rec in lts: outfile.write(rec + '\n')
 
@@ -125,10 +131,8 @@ def main():
 
 # =============================================================================
 if __name__ == '__main__':
-    start = time.time()
+    raw_input("Press Enter to proceed...")
     main()
-    secs = time.time()-start
-    print 'Optimization duration: ', (secs / 60.), ' minutes.'
 
 
 
