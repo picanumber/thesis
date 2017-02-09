@@ -15,15 +15,40 @@ import optimize_rtree
 from pyswarm import pso
 
 # =============================================================================
-# 
+def get_max_nodes(mn):
+    """ 
+    """
+    return int(mn)
+
+# =============================================================================
+def get_min_nodes(min_node_perc, max_nodes):
+    """
+    """
+    x0 = int(0.1 * min_node_perc * max_nodes)
+    if x0 < 1: x0 = 1
+    return x0
+
+# =============================================================================
+def print_header(dataset, numElems, numQs, qType, filename):
+    """ prints info on the experiment in filename 
+    """
+    info = 'dataset={}, numElems={}, numQs={}, qType={}\n'.format(
+        dataset, numElems, numQs, qType)
+    subscr = '=' * (len(info) - 1)
+
+    with open(filename, 'w') as outfile: 
+        outfile.write('\n\n\t*** R-tree optimization with pyswarm ***\n\n')
+        outfile.write(subscr + '\n')
+        outfile.write(info)
+        outfile.write(subscr + '\n\n')
+
 # =============================================================================
 def rtree_load_and_query(x, *args, **kwargs): 
         """ objective function
         """
-        x1 = int(x[1])
-        x0 = int(0.1 * x[0] * x1)
-        if x0 < 1: x0 = 1
-
+        x1 = get_max_nodes(x[1])
+        x0 = get_min_nodes(x[0], x1)
+        
         opt = kwargs['opt_task']
 
         a = '{}:{}'.format(x0, x1)
@@ -31,7 +56,7 @@ def rtree_load_and_query(x, *args, **kwargs):
             print 'reusing solution ({}, {}) for ({}, {})'.format(x0, x1, x[0], x[1])
             return opt.used_solutions[a]
 
-        # code below only for debug purposes
+        # 2 lines below only for debug purposes
         #f = x1**4 - 2*x0*x1**2 + x0**2 + x1**2 - 2*x1 + 5
         #return f
         f = optimize_rtree.objective_function(dataset=opt.ds_num, numElems=opt.numElems, 
@@ -45,8 +70,6 @@ def rtree_load_and_query(x, *args, **kwargs):
         opt.used_solutions[a] = f 
         return f
 
-# =============================================================================
-# 
 # =============================================================================
 class optimization_task(multiprocessing.Process):
     def __init__(self, id, dataset, numElems, numQs, qType, queue):
@@ -85,65 +108,40 @@ class optimization_task(multiprocessing.Process):
         """
         lb = [1, 4]
         ub = [5, 128]
+        
         xopt, fopt = pso(rtree_load_and_query, lb, ub, minstep = 1, kwargs = {'opt_task': self})
-        rec = (fopt, xopt, self.split_type) # 
-        self.q.put(rec)                     # to export results in m-threaded
-
-
-def serialize(rec, outfile): 
-    """ write the recorded resutls in the target output file (for 1threaded)
-    """
-    outfile.write('opt={} | minNod={}, maxNod={} | split={}\n'.format(
-            rec[0], rec[1][0], rec[1][1], rec[2]))
-    
-# =============================================================================
-# 
-# =============================================================================
-def single_threaded():
-    """ calls the optimization tasks sequentially """
-    filename  = 'pyswarm_output.txt'
-    processes = []
-    for i, split in zip(range(4), ['lin', 'qdrt', 'rstar', 'bulk']): 
-        processes.append(optimization_task(i, 'syth2d', 50000, 10000, 'within'))
-        processes[-1].set_split(split)
-
-    for pr in processes: pr.run()
-
-    open(filename, 'w').close() # clear the output
-    with open(filename, 'w') as outfile:
-        for pr in processes: pr.serialize(outfile)
-     
-    return 0
+        
+        x1 = get_max_nodes(xopt[1])
+        x0 = get_min_nodes(xopt[0], x1)
+        rec = 'optimum latency = {} | nodes = ({}, {}) | split = {}'.format(
+            fopt, x0, x1, self.split_type)
+        self.q.put(rec) # to export results in m-threaded
 
 # =============================================================================
-# 
-# =============================================================================
-def multi_threaded():
+def multi_threaded(dataset, numElems, numQs, qType, filename):
     """ calls the optimization tasks in parallel """ 
-    q         = Queue()
+    q = Queue()
     processes = []
-    filename  = 'pyswarm_output.txt'
     
     for i, split in zip(range(4), ['lin', 'qdrt', 'rstar', 'bulk']): 
-        processes.append(optimization_task(i, 'syth2d', 50000, 10000, 'within', q))
+        processes.append(optimization_task(i, dataset, numElems, numQs, qType, q))
         processes[-1].set_split(split)
 
     [p.start() for p in processes]    
     
-    open(filename, 'w').close() # clear the output
-
+    print_header(dataset, numElems, numQs, qType, filename)
+    # append results
     for p in processes:
         p.join()
-        with open('pyswarm_output.txt', 'a') as outfile:
-            serialize(q.get(), outfile)
+        with open(filename, 'a') as outfile:
+            outfile.write(q.get() + '\n')
         
     return 0
 
 # =============================================================================
-# 
-# =============================================================================
 def main():
-    multi_threaded(); 
+    # TODO: command line arguments should control these
+    multi_threaded('syth2d', 50000, 10000, 'within', 'pyswarm_multithreaded.txt'); 
 
 # =============================================================================
 if __name__ == '__main__':

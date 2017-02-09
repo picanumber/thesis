@@ -4,7 +4,6 @@
 import os, sys, time
 import pdb
 import time
-import multiprocessing
 
 # =============================================================================
 # Extension modules
@@ -13,7 +12,33 @@ import optimize_rtree
 from pyswarm import pso
 
 # =============================================================================
-# 
+def get_max_nodes(mn):
+    """ 
+    """
+    return int(mn)
+
+# =============================================================================
+def get_min_nodes(min_node_perc, max_nodes):
+    """
+    """
+    x0 = int(0.1 * min_node_perc * max_nodes)
+    if x0 < 1: x0 = 1
+    return x0
+
+# =============================================================================
+def print_header(dataset, numElems, numQs, qType, filename):
+    """ prints info on the experiment in filename 
+    """
+    info = 'dataset={}, numElems={}, numQs={}, qType={}\n'.format(
+        dataset, numElems, numQs, qType)
+    subscr = '=' * (len(info) - 1)
+
+    with open(filename, 'w') as outfile: 
+        outfile.write('\n\n\t*** R-tree optimization with pyswarm ***\n\n')
+        outfile.write(subscr + '\n')
+        outfile.write(info)
+        outfile.write(subscr + '\n\n')
+
 # =============================================================================
 def get_objective_func(dataset, numElems, numQs, qType, split):
     """
@@ -41,17 +66,17 @@ def get_objective_func(dataset, numElems, numQs, qType, split):
     def rtree_load_and_query(x, *args, **kwargs): 
         """
         """
-        x1 = int(x[1])
-        x0 = int(0.1 * x[0] * x1)
-        if x0 < 1: x0 = 1
+        x1 = get_max_nodes(x[1])
+        x0 = get_min_nodes(x[0], x1)
 
         a = '{}:{}'.format(x0, x1)
         if a in used_solutions:
             print 'reusing solution ({}, {}) for ({}, {})'.format(x0, x1, x[0], x[1])
             return used_solutions[a]
 
-        f = x1**4 - 2*x0*x1**2 + x0**2 + x1**2 - 2*x1 + 5
-        return f
+        # 2 lines below only for debug purposes
+        #f = x1**4 - 2*x0*x1**2 + x0**2 + x1**2 - 2*x1 + 5
+        #return f
         f = optimize_rtree.objective_function(dataset=ds_num, numElems=numElems, 
                                               numQs=numQs, qType=query, minNodes=x0, 
                                               maxNodes=x1, splitType=split_algo)
@@ -66,71 +91,37 @@ def get_objective_func(dataset, numElems, numQs, qType, split):
     return rtree_load_and_query
 
 # =============================================================================
-# 
-# =============================================================================
 def solve_optimization_problem(
     dataset, rtree_size, query_size, query, split_type): 
     """
     creates the objective function and optimization problem
     """
-    objfunc = get_objective_func('syth2d', 50000, 10000, 'within', split_type)
-    lb = [1, 4]
-    ub = [5, 128]
+    objfunc = get_objective_func(dataset, rtree_size, query_size, query, split_type)
+    lb = [1, 4]   # lb = 1 tenth  (0.1) -   4 nodes
+    ub = [5, 128] # ub = 5 tenths (0.5) - 128 nodes
+    
     xopt, fopt = pso(objfunc, lb, ub, minstep = 1)
-    return (fopt, xopt, split_type)
+    x1 = get_max_nodes(xopt[1])
+    x0 = get_min_nodes(xopt[0], x1)
+    rec = 'optimum latency = {} | nodes = ({}, {}) | split = {}'.format(fopt, x0, x1, split_type) 
+    return rec
 
 # =============================================================================
-# used by the multithreaded module
-# =============================================================================
-def set_up_optimization(dataset, rtree_size, query_size, query): 
-    """ returns an optimization setup
-    """
-    def opt_fun(split_type): 
-        return solve_optimization_problem(dataset, rtree_size, query_size, query, split_type)
-
-    return opt_fun
-
-# =============================================================================
-# 
-# =============================================================================
-def single_threaded():
+def single_threaded(dataset, numElems, numQs, qType, filename):
     """entry point for the application"""
     lts = [] # list of tuples
     for split in ['lin', 'qdrt', 'rstar', 'bulk']: 
-        lts.append(solve_optimization_problem('real2d', 50000, 10000, 'within', split))
+        lts.append(solve_optimization_problem(dataset, numElems, numQs, qType, split))
 
-    with open('pyswarm_outpu.txt', 'w') as outfile:
-        for rec in lts:
-            outfile.write('opt={} | minNod={}, maxNod={} | split={}\n'.format(
-                rec[0], rec[1][0], rec[1][1], rec[2]))
-
-# =============================================================================
-# 
-# =============================================================================
-def call_opt_task(tup):
-    return tup[0](tup[1])
-
-# =============================================================================
-# 
-# =============================================================================
-def multi_threaded():
-    pool = multiprocessing.Pool()
-    op      = set_up_optimization('real2d', 50000, 10000, 'within')
-    tasks   = [(op, 'lin'), (op, 'qdrt'), (op, 'rstar'), (op, 'bulk')]
-    outputs = pool.map(call_opt_task, tasks)
-
-    with open('pyswarm_outpu.txt', 'w') as outfile:
-        for rec in outputs:
-            outfile.write('opt={} | minNod={}, maxNod={} | split={}\n'.format(
-                rec[0], rec[1][0], rec[1][1], rec[2]))
+    print_header(dataset, numElems, numQs, qType, filename)
+    with open(filename, 'a') as outfile:
+        for rec in lts: outfile.write(rec + '\n')
 
     return 0
 
 # =============================================================================
-# 
-# =============================================================================
 def main():
-    multi_threaded(); 
+    single_threaded('real2d', 50000, 10000, 'within', 'pyswarm_single_threaded.txt'); 
 
 # =============================================================================
 if __name__ == '__main__':

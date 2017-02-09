@@ -1,0 +1,12 @@
+
+
+	*** R-tree optimization with pyswarm ***
+
+=========================================================
+dataset=real2d, numElems=50000, numQs=10000, qType=within
+=========================================================
+
+optimum latency = 209 | nodes = (2, 4) | split = lin
+optimum latency = 209 | nodes = (2, 4) | split = qdrt
+optimum latency = 209 | nodes = (2, 4) | split = rstar
+optimum latency = 209 | nodes = (2, 4) | split = bulk

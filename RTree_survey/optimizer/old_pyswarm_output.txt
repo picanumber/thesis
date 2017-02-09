@@ -1,0 +1,4 @@
+opt=130 | minNod=5.0, maxNod=6.14054248745 | split=rstar
+opt=78 | minNod=1.0, maxNod=8.43088602943 | split=qdrt
+opt=58 | minNod=1.48964986844, maxNod=23.4532857112 | split=lin
+opt=14 | minNod=1.14811472096, maxNod=37.0930982263 | split=bulk
