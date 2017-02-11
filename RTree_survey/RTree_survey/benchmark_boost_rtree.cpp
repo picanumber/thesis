@@ -3,6 +3,8 @@
 #include <type_traits>
 
 #include <boost/geometry/index/rtree.hpp>
+#include <boost/pool/pool.hpp>
+#include <boost/pool/pool_alloc.hpp>
 #include <CODEine/benchmark.h>
 #include "bmk_utils.h"
 #include "rtree_experiments.h"
@@ -14,6 +16,8 @@
 	#define FACTOR 10
 	#define FULL_SCALE 1
 #endif
+
+#define USE_POOLS 1
 
 #if !FULL_SCALE
 #define NUM_REPS 1
@@ -37,6 +41,20 @@ using namespace utl;
 using real_secs_t = std::chrono::duration<double, std::ratio<1>>;
 using bmk_t = bmk::benchmark<real_secs_t>;
 namespace bre = boost_rtree_experiments; 
+
+#if USE_POOLS
+template <class box_t, class split_t>
+using rtree_type = bgi::rtree<
+	box_t, 
+	split_t, 
+	bgi::indexable<box_t>, 
+	bgi::equal_to<box_t>, 
+	boost::pool_allocator<box_t>
+>;
+#else
+template <class box_t, class split_t>
+using rtree_type = bgi::rtree<box_t, split_t>; 
+#endif
 
 constexpr std::size_t max_capacity = 1024; // TODO: Fix those
 constexpr std::size_t min_capacity = 340;
@@ -76,7 +94,7 @@ namespace
 	{
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>; 
-		using rtree_t = bgi::rtree<box_t, split_t<max_capacity, min_capacity>>;
+		using rtree_t = rtree_type<box_t, split_t<max_capacity, min_capacity>>;
 		using ilist_t = std::initializer_list<std::size_t>; 
 
 		std::cout << get_info_header(param, split) << " ====================== BEGIN\n"; 
@@ -230,7 +248,7 @@ namespace
 	{
 		using point_t = inner_pt_t<box_t>;
 		using boxes_t = std::vector<box_t>;
-		using rtree_t = bgi::rtree<box_t, split_t>;
+		using rtree_t = rtree_type<box_t, split_t>;
 
 		std::cout << get_info_header(param, split) << " ====================== BEGIN\n";
 		std::vector<rtree_t> used_rtrees; 
@@ -528,4 +546,146 @@ int benchmark_boost_rtree()
 
 	std::cout << "\n=======================================================END\n";
 	return 0; 
+}
+
+int benchmark_boost_rtree_synth()
+{
+	typedef bg::model::point<double, 2, bg::cs::cartesian> point_t;
+	typedef bg::model::box<point_t> box_t;
+
+	std::cout << "BEGIN=====================================================\n\n";
+
+	bmk_t load_ct, load_rt,
+		q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+		q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+		q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+		q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest;
+
+	std::cout << "making input...\n";
+	auto input_method = input_maker::rand_gen;
+	std::vector<box_t> boxes = generate_input<2, double>(input_method);
+	std::size_t tree_size = TREE_SZ > boxes.size() ? boxes.size() : TREE_SZ;
+	std::size_t query_size = QUERY_SZ; /* input_method == input_maker::from_file ?
+									   std::min(std::size_t{ 10'000 }, boxes.size()) : QUERY_SZ;*/
+
+	bmk::timeout<std::chrono::minutes> to;
+	to.tic();
+	for (auto&& params : utl::cartesian_product(param_vs, split_vs))
+	{
+		do_rtree_bmk(
+			std::get<0>(params), std::get<1>(params),
+			boxes, tree_size, query_size, load_ct, load_rt,
+			q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+			q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+			q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+			q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest);
+	}
+	to.toc();
+	std::cout << "testing took " << to.duration().count() << "minutes overall\n";
+
+	auto tree_sz = utl::to_short_string(tree_size);
+	auto query_sz = utl::to_short_string(query_size);
+	auto maxCapty = std::to_string(max_capacity);
+	auto minCapty = std::to_string(min_capacity);
+
+	auto load_ct_name = "Loading latency: nodes = " + maxCapty + " / " + minCapty;
+	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt");
+
+	auto load_rt_name = "Loading latency: RTree size = " + tree_sz;
+	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt");
+
+	auto q_ct_name = "RTree size = " + tree_sz + ", nodes = " + maxCapty + " / " + minCapty;
+	auto q_rt_name = "RTree size = " + tree_sz + ", queries = " + query_sz;
+	auto knn_name = "kNN, k = " + std::to_string(nn) + " | ";
+
+	q_ct_contains.serialize(("Contains | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_contains.txt");
+	q_ct_covered_by.serialize(("Covered_by | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_covered_by.txt");
+	q_ct_covers.serialize(("Covers | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_covers.txt");
+	q_ct_disjoint.serialize(("Disjoint | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_disjoint.txt");
+	q_ct_intersects.serialize(("Intersects | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_intersects.txt");
+	q_ct_overlaps.serialize(("Overlaps | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_overlaps.txt");
+	q_ct_within.serialize(("Within | " + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_within.txt");
+	q_ct_nearest.serialize((knn_name + q_ct_name).c_str(), "mem_opt_results/synth_q_ct_kNN.txt");
+	q_rt_contains.serialize(("Contains | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_contains.txt");
+	q_rt_covered_by.serialize(("Covered_by | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_covered_by.txt");
+	q_rt_covers.serialize(("Covers | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_covers.txt");
+	q_rt_disjoint.serialize(("Disjoint | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_disjoint.txt");
+	q_rt_intersects.serialize(("Intersects | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_intersects.txt");
+	q_rt_overlaps.serialize(("Overlaps | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_overlaps.txt");
+	q_rt_within.serialize(("Within | " + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_within.txt");
+	q_rt_nearest.serialize((knn_name + q_rt_name).c_str(), "mem_opt_results/synth_q_rt_kNN.txt");
+
+	std::cout << "\n=======================================================END\n";
+	return 0;
+}
+
+int benchmark_boost_rtree_real()
+{
+	typedef bg::model::point<double, 2, bg::cs::cartesian> point_t;
+	typedef bg::model::box<point_t> box_t;
+
+	std::cout << "BEGIN=====================================================\n\n";
+
+	bmk_t load_ct, load_rt,
+		q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+		q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+		q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+		q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest;
+
+	std::cout << "making input...\n";
+	auto input_method = input_maker::from_file;
+	std::vector<box_t> boxes = generate_input<2, double>(input_method);
+	std::size_t tree_size = TREE_SZ > boxes.size() ? boxes.size() : TREE_SZ;
+	std::size_t query_size = QUERY_SZ; /* input_method == input_maker::from_file ?
+									   std::min(std::size_t{ 10'000 }, boxes.size()) : QUERY_SZ;*/
+
+	bmk::timeout<std::chrono::minutes> to;
+	to.tic();
+	for (auto&& params : utl::cartesian_product(param_vs, split_vs))
+	{
+		do_rtree_bmk(
+			std::get<0>(params), std::get<1>(params),
+			boxes, tree_size, query_size, load_ct, load_rt,
+			q_ct_contains, q_ct_covered_by, q_ct_covers, q_ct_disjoint,
+			q_ct_intersects, q_ct_overlaps, q_ct_within, q_ct_nearest,
+			q_rt_contains, q_rt_covered_by, q_rt_covers, q_rt_disjoint,
+			q_rt_intersects, q_rt_overlaps, q_rt_within, q_rt_nearest);
+	}
+	to.toc();
+	std::cout << "testing took " << to.duration().count() << "minutes overall\n";
+
+	auto tree_sz = utl::to_short_string(tree_size);
+	auto query_sz = utl::to_short_string(query_size);
+	auto maxCapty = std::to_string(max_capacity);
+	auto minCapty = std::to_string(min_capacity);
+
+	auto load_ct_name = "Loading latency: nodes = " + maxCapty + " / " + minCapty;
+	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt");
+
+	auto load_rt_name = "Loading latency: RTree size = " + tree_sz;
+	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt");
+
+	auto q_ct_name = "RTree size = " + tree_sz + ", nodes = " + maxCapty + " / " + minCapty;
+	auto q_rt_name = "RTree size = " + tree_sz + ", queries = " + query_sz;
+	auto knn_name = "kNN, k = " + std::to_string(nn) + " | ";
+
+	q_ct_contains.serialize(("Contains | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_contains.txt");
+	q_ct_covered_by.serialize(("Covered_by | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_covered_by.txt");
+	q_ct_covers.serialize(("Covers | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_covers.txt");
+	q_ct_disjoint.serialize(("Disjoint | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_disjoint.txt");
+	q_ct_intersects.serialize(("Intersects | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_intersects.txt");
+	q_ct_overlaps.serialize(("Overlaps | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_overlaps.txt");
+	q_ct_within.serialize(("Within | " + q_ct_name).c_str(), "mem_opt_results/real_q_ct_within.txt");
+	q_ct_nearest.serialize((knn_name + q_ct_name).c_str(), "mem_opt_results/real_q_ct_kNN.txt");
+	q_rt_contains.serialize(("Contains | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_contains.txt");
+	q_rt_covered_by.serialize(("Covered_by | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_covered_by.txt");
+	q_rt_covers.serialize(("Covers | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_covers.txt");
+	q_rt_disjoint.serialize(("Disjoint | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_disjoint.txt");
+	q_rt_intersects.serialize(("Intersects | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_intersects.txt");
+	q_rt_overlaps.serialize(("Overlaps | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_overlaps.txt");
+	q_rt_within.serialize(("Within | " + q_rt_name).c_str(), "mem_opt_results/real_q_rt_within.txt");
+	q_rt_nearest.serialize((knn_name + q_rt_name).c_str(), "mem_opt_results/real_q_rt_kNN.txt");
+
+	std::cout << "\n=======================================================END\n";
+	return 0;
 }

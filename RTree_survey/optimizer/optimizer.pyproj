@@ -25,6 +25,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="examples.py" />
+    <Compile Include="example_multiprocessing.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="example_pyswarm.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="optimizer.py">
       <SubType>Code</SubType>
     </Compile>
