@@ -589,10 +589,10 @@ int benchmark_boost_rtree_synth()
 	auto minCapty = std::to_string(min_capacity);
 
 	auto load_ct_name = "Loading latency: nodes = " + maxCapty + " / " + minCapty;
-	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt");
+	load_ct.serialize(load_ct_name.c_str(), "mem_opt_results/synth_load_ct.txt");
 
 	auto load_rt_name = "Loading latency: RTree size = " + tree_sz;
-	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt");
+	load_rt.serialize(load_rt_name.c_str(), "mem_opt_results/synth_load_rt.txt");
 
 	auto q_ct_name = "RTree size = " + tree_sz + ", nodes = " + maxCapty + " / " + minCapty;
 	auto q_rt_name = "RTree size = " + tree_sz + ", queries = " + query_sz;
@@ -660,10 +660,10 @@ int benchmark_boost_rtree_real()
 	auto minCapty = std::to_string(min_capacity);
 
 	auto load_ct_name = "Loading latency: nodes = " + maxCapty + " / " + minCapty;
-	load_ct.serialize(load_ct_name.c_str(), "results/load_ct.txt");
+	load_ct.serialize(load_ct_name.c_str(), "mem_opt_results/real_load_ct.txt");
 
 	auto load_rt_name = "Loading latency: RTree size = " + tree_sz;
-	load_rt.serialize(load_rt_name.c_str(), "results/load_rt.txt");
+	load_rt.serialize(load_rt_name.c_str(), "mem_opt_results/real_load_rt.txt");
 
 	auto q_ct_name = "RTree size = " + tree_sz + ", nodes = " + maxCapty + " / " + minCapty;
 	auto q_rt_name = "RTree size = " + tree_sz + ", queries = " + query_sz;
