@@ -102,7 +102,7 @@ def solve_optimization_problem(
     lb = [1, 4]   # lb = 1 tenth  (0.1) -   4 nodes
     ub = [5, 128] # ub = 5 tenths (0.5) - 128 nodes
     
-    xopt, fopt = pso(objfunc, lb, ub, minstep = 1)
+    xopt, fopt = pso(objfunc, lb, ub, minstep = 1, debug = True)
     x1 = get_max_nodes(xopt[1])
     x0 = get_min_nodes(xopt[0], x1)
     rec = 'optimum latency = {} | nodes = ({}, {}) | split = {}'.format(fopt, x0, x1, split_type) 
@@ -127,7 +127,7 @@ def single_threaded(dataset, numElems, numQs, qType, filename):
 
 # =============================================================================
 def main():
-    single_threaded('real2d', 50000, 10000, 'within', 'pyswarm_single_threaded.txt'); 
+    single_threaded('real2d', 10000, 5000, 'within', 'pyswarm_single_threaded_100000_50000.txt'); 
 
 # =============================================================================
 if __name__ == '__main__':

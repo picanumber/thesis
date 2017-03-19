@@ -5,6 +5,8 @@ import os, sys, time
 import pdb
 import time
 import copy
+import itertools
+import pickle
 import multiprocessing
 from multiprocessing import Process, Queue
 
@@ -29,14 +31,25 @@ def get_min_nodes(min_node_perc, max_nodes):
     return x0
 
 # =============================================================================
+def to_k_format(num): 
+    """ 
+    Returns an easy to read numerical representation, e.g.
+    50000 -> 50K
+    5     -> 5
+    """
+    if num >= 1e06: return "{}M".format(num / 1e06)
+    if num >= 1e03: return "{}K".format(num / 1e03)
+    return num
+
+# =============================================================================
 def print_header(dataset, numElems, numQs, qType, filename, minutes):
     """ prints info on the experiment in filename 
     """
     info = 'dataset={}, numElems={}, numQs={}, qType={}\n'.format(
-        dataset, numElems, numQs, qType)
+        dataset, to_k_format(numElems), to_k_format(numQs), qType)
     subscr = '=' * (len(info) - 1)
 
-    with open(filename, 'w') as outfile: 
+    with open(filename, 'a') as outfile: 
         outfile.write(
             '\n\n\t*** R-tree optimization with pyswarm ({} minutes) ***\n\n'.
             format(minutes))
@@ -86,6 +99,12 @@ class optimization_task(multiprocessing.Process):
         super(optimization_task, self).__init__()
         self.id = id
 
+        # implementation : write down the optimization parameters
+        self.data_set = dataset
+        self.tree_size = numElems
+        self.q_size = numQs
+        self.q_type = qType
+
         # implementation : set up the optimization task
         self.used_solutions = {}
         self.ds_num         = { 'real2d' : 1, 'syth2d' : 2, 'real3d' : 3, 'syth3d' : 4 }[dataset]
@@ -111,17 +130,32 @@ class optimization_task(multiprocessing.Process):
         lb = [1, 4]
         ub = [5, 128]
         
-        xopt, fopt = pso(rtree_load_and_query, lb, ub, minstep = 1, kwargs = {'opt_task': self})
+        optimize_rtree.clear_problem_space()
+        xopt, fopt = pso(rtree_load_and_query, lb, ub, minstep = 1, 
+                         minfunc = 1, maxiter = 10, swarmsize = 50, kwargs = {'opt_task': self})
         
         x1 = get_max_nodes(xopt[1])
         x0 = get_min_nodes(xopt[0], x1)
         rec = 'optimum latency = {} | nodes = ({}, {}) | split = {}'.format(
             fopt, x0, x1, self.split_type)
-        self.q.put(rec) # to export results in m-threaded
+
+        # log info on the search space
+        sp_file = "search_spaces/{}_{}_{}_{}_{}.txt".format(
+            self.split_type, self.q_type, self.data_set, 
+            to_k_format(self.tree_size), to_k_format(self.q_size))
+
+        with open(sp_file, 'wb') as outf: 
+            pickle.dump(self.used_solutions, outf)
+
+        # export results in m-threaded
+        self.q.put(rec) 
 
 # =============================================================================
 def multi_threaded(dataset, numElems, numQs, qType, filename):
-    """ calls the optimization tasks in parallel """ 
+    """ 
+    calls the optimization tasks in parallel, e.g.
+    multi_threaded('real2d', 15000, 1500, 'overlaps', 'pyswarm_multithreaded.txt')
+    """ 
     start = time.time()
     
     # 1. 
@@ -138,16 +172,40 @@ def multi_threaded(dataset, numElems, numQs, qType, filename):
     # 3. 
     print_header(dataset, numElems, numQs, qType, filename, (secs // 60))
     with open(filename, 'a') as outfile:
-        while not q.empty(): outfile.write(q.get() + '\n')
+        lines = {}
+        while not q.empty(): 
+            words = q.get()
+            key = words.split('|')[-1].strip().split('=')[-1].strip()
+            lines[key] = words
+        for elem in lines: 
+            outfile.write(lines[elem] + '\n')
 
     return 0
 
 # =============================================================================
-def main():
-    # TODO: command line arguments should control these
-    #multi_threaded('syth2d', 500, 100, 'within', 'pyswarm_multithreaded.txt'); 
-    multi_threaded('syth2d', 50000, 10000, 'within', 'pyswarm_multithreaded.txt'); 
+def run_optimization_setups(datasets, tree_sizes, query_sizes, query_types, fout): 
+    """ runs the cartesian product of the combinations given
+    """
+    for elem in itertools.product(datasets, tree_sizes, query_sizes, query_types): 
+        multi_threaded(*elem, filename=fout)
 
+    return 
+
+# =============================================================================
+def main():
+    """ entry point for the application
+    """
+    d_set = ['real2d', 'syth2d']
+    qType = ['within', 'overlaps']
+        
+    run_optimization_setups(
+        d_set, [50000], [25000, 50000, 75000, 100000], qType, 
+        'optimize_fixed_tree_size.txt')
+
+    run_optimization_setups(
+        d_set, [25000, 75000, 100000], [50000], qType, 
+        'optimize_fixed_query_size.txt')
+    
 # =============================================================================
 if __name__ == '__main__':
     raw_input("Press Enter to proceed...")

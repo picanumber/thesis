@@ -17,7 +17,7 @@
 	#define FULL_SCALE 1
 #endif
 
-#define USE_POOLS 1
+#define USE_POOLS 2 // 0: NO, 1: pool_allocator, 2: fast_pool_allocator
 
 #if !FULL_SCALE
 #define NUM_REPS 1
@@ -42,7 +42,7 @@ using real_secs_t = std::chrono::duration<double, std::ratio<1>>;
 using bmk_t = bmk::benchmark<real_secs_t>;
 namespace bre = boost_rtree_experiments; 
 
-#if USE_POOLS
+#if (1 == USE_POOLS)
 template <class box_t, class split_t>
 using rtree_type = bgi::rtree<
 	box_t, 
@@ -50,6 +50,15 @@ using rtree_type = bgi::rtree<
 	bgi::indexable<box_t>, 
 	bgi::equal_to<box_t>, 
 	boost::pool_allocator<box_t>
+>;
+#elif (2 == USE_POOLS)
+template <class box_t, class split_t>
+using rtree_type = bgi::rtree<
+	box_t,
+	split_t,
+	bgi::indexable<box_t>,
+	bgi::equal_to<box_t>,
+	boost::fast_pool_allocator<box_t>
 >;
 #else
 template <class box_t, class split_t>

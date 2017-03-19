@@ -33,7 +33,9 @@ int test_optimizer(int, char const* a, char const* b, char const* c);
 /* ~ magic numbers
 ----------------*/
 
-// result is return in milliseconds run time
+int empty_problem_space();
+
+// result is returned in milliseconds 
 int run_rtree_operations(
 	int dataset, int numElems, int numQs, int qType,  // parameters that set the problem
 	int minNodes, int maxNodes, int splitType         // parameters to optimize

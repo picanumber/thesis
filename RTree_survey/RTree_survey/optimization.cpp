@@ -6,6 +6,7 @@
 #include <string>
 #include <CODEine/benchmark.h>
 #include "bmk_utils.h"
+#include <thread>
 #include <boost/geometry/index/rtree.hpp>
 
 using namespace utl; 
@@ -165,8 +166,6 @@ std::chrono::milliseconds run_experiment_impl(
 	}
 	to.toc(); 
 
-
-
 	return to.duration(); 
 }
 
@@ -207,6 +206,31 @@ std::chrono::milliseconds run_experiment(
 	}
 }
 
+namespace
+{
+	std::vector<box_t>& get_input_set()
+	{
+		thread_local std::vector<box_t> boxes; 
+		return boxes; 
+	}
+	
+	std::vector<box_t>& get_search_set()
+	{
+		thread_local std::vector<box_t> qboxs;
+		return qboxs; 
+	}
+}
+
+int empty_problem_space()
+{
+	std::cout << "clearing problem space\n"; 
+	
+	get_input_set().clear();  
+	get_search_set().clear(); 
+
+	return 0; 
+}
+
 // experiments use milliseconds
 int run_rtree_operations(
 	int dataset, int numElems, int numQs, int qType, // parameters that set the problem
@@ -221,11 +245,31 @@ int run_rtree_operations(
 
 		std::vector<std::chrono::milliseconds> timings;
 
-		std::vector<box_t> boxes = make_input<2, double>(input_method);
-		std::vector<box_t> qboxs = CreateSearchSpace(boxes, (std::size_t)numQs);
-
-		for (size_t i = 0; i < 10; i++)
+		std::vector<box_t> &boxes = get_input_set(); 
+		if (boxes.empty())
 		{
+			boxes = make_input<2, double>(input_method);
+		}
+		else
+		{
+			std::cout << "reusing input space\n"; 
+		}
+
+		std::vector<box_t> &qboxs = get_search_set();
+		if (qboxs.empty())
+		{
+			qboxs = CreateSearchSpace(boxes, (std::size_t)numQs);
+		}
+		else
+		{
+			std::cout << "reusing search space\n"; 
+		}
+
+		using namespace std::chrono_literals; 
+		while (std::accumulate(timings.begin(), timings.end(), 0ms).count() < 100)
+		{
+			bmk::ccleaner cc; 
+			cc(); 
 			switch (splitType)
 			{
 			case LOAD_BULK:
@@ -244,7 +288,7 @@ int run_rtree_operations(
 		}
 
 		auto it_min = std::min_element(timings.begin(), timings.end());
-
+		std::cout << "returning " << it_min->count() << std::endl;
 		return it_min->count();
 	}
 	catch (const std::exception&)

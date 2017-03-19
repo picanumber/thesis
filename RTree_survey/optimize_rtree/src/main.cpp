@@ -66,11 +66,20 @@ static PyObject* objective_function(PyObject *self, PyObject *args, PyObject *ke
 	//Py_RETURN_NONE;
 }
 
+static PyObject* clear_problem_space(PyObject *self)
+{
+	return PyLong_FromLong((long)empty_problem_space());
+}
+
 PyMethodDef OptimizerMethods[] = 
 {
 	{ 
 		"objective_function", (PyCFunction)objective_function, 
 		METH_VARARGS | METH_KEYWORDS, "Definition of the objective function"
+	},
+	{
+		"clear_problem_space", (PyCFunction)clear_problem_space,
+		METH_NOARGS, "reset the tree and query size to 0"
 	},
 	{ NULL, NULL, 0, NULL } // sentinel 
 }; 

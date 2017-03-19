@@ -15,6 +15,7 @@ website        : https://ngathanasiou.wordpress.com/
                         
 import os
 import ast
+import pickle
 import numpy as np
 import pylab as pl
 import matplotlib.pyplot as plt
@@ -143,20 +144,76 @@ def openwindows():
     nam = tkFileDialog.askopenfilename()
     if nam != '':
         plot_benchmark_file(nam)
+# -----------------------------------------------------------------------            
 
+# -----------------------------------------------------------------------            
+def scatter_3d(fname, xs_min, ys_max, zs_lat): 
+    """
+    """
+    plt.clf()
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for xs, ys, zs in zip(xs_min, ys_max, zs_lat):
+        ax.scatter(xs, ys, zs)
+
+    ax.set_xlim((min(xs_min), max(xs_min)))
+    ax.set_ylim((min(ys_max), max(ys_max)))
+    ax.set_zlim((min(zs_lat), max(zs_lat)))
+    ax.set_xlabel('min capacity')
+    ax.set_ylabel('max capacity')
+    ax.set_zlabel('latency (ms)')
+
+    titolo = fname.split('/')
+    plt.title(titolo[-1].rstrip('.txt')) 
+    plt.show()
+# -----------------------------------------------------------------------            
+
+# -----------------------------------------------------------------------            
+def plot_search_space(fname): 
+    """
+    """
+    with open(fname, 'rb') as handle:
+        xs_min = []
+        ys_max = []
+        zs_lat = []
+        ss_dict = pickle.loads(handle.read())
+        for elem in ss_dict: 
+            (low, high) = elem.split(':')
+            xs_min.append(int(low))
+            ys_max.append(int(high))
+            zs_lat.append(ss_dict[elem])
+
+        scatter_3d(fname, xs_min, ys_max, zs_lat)
+        
+# -----------------------------------------------------------------------            
+
+# -----------------------------------------------------------------------            
+def visualize_search_space(): 
+    nam = tkFileDialog.askopenfilename()
+    if nam != '':
+        plot_search_space(nam)
+# -----------------------------------------------------------------------            
+
+# -----------------------------------------------------------------------            
 def plot_benchmarks():
     root = Tk()
     myfiletypes = [('Python files', '*.py'), ('All files', '*')]
     open = tkFileDialog.Open(root, filetypes = myfiletypes)
     Button(root, text="PLOT Benchmark", command=openwindows).pack()
+    Button(root, text="Search Space", command=visualize_search_space).pack()
 
     statusbar = Label(root, text="", bd=1, relief=SUNKEN, anchor=W)
     statusbar.pack(side=BOTTOM, fill=X)
     root.mainloop()
+# -----------------------------------------------------------------------            
 
+# -----------------------------------------------------------------------            
 def main(): 
     plot_benchmarks()
+# -----------------------------------------------------------------------            
 
+# -----------------------------------------------------------------------            
 if __name__ == '__main__': 
     main()
 # -----------------------------------------------------------------------            
