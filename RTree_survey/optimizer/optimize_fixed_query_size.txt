@@ -1,0 +1,144 @@
+
+
+	*** R-tree optimization with pyswarm (16.0 minutes) ***
+
+=========================================================
+dataset=real2d, numElems=25.0K, numQs=50.0K, qType=within
+=========================================================
+
+optimum latency = 1108 | nodes = (31, 80) | split = bulk
+optimum latency = 1125 | nodes = (10, 109) | split = lin
+optimum latency = 1244 | nodes = (49, 101) | split = qdrt
+optimum latency = 1343 | nodes = (61, 122) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (17.0 minutes) ***
+
+===========================================================
+dataset=real2d, numElems=25.0K, numQs=50.0K, qType=overlaps
+===========================================================
+
+optimum latency = 815 | nodes = (8, 48) | split = bulk
+optimum latency = 841 | nodes = (11, 99) | split = lin
+optimum latency = 900 | nodes = (18, 101) | split = qdrt
+optimum latency = 1056 | nodes = (64, 128) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (42.0 minutes) ***
+
+=========================================================
+dataset=real2d, numElems=75.0K, numQs=50.0K, qType=within
+=========================================================
+
+optimum latency = 3018 | nodes = (36, 128) | split = bulk
+optimum latency = 2916 | nodes = (13, 125) | split = lin
+optimum latency = 3704 | nodes = (23, 58) | split = qdrt
+optimum latency = 3665 | nodes = (60, 123) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (30.0 minutes) ***
+
+===========================================================
+dataset=real2d, numElems=75.0K, numQs=50.0K, qType=overlaps
+===========================================================
+
+optimum latency = 2130 | nodes = (32, 81) | split = bulk
+optimum latency = 2255 | nodes = (21, 128) | split = lin
+optimum latency = 2393 | nodes = (25, 86) | split = qdrt
+optimum latency = 2861 | nodes = (60, 122) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (53.0 minutes) ***
+
+==========================================================
+dataset=real2d, numElems=100.0K, numQs=50.0K, qType=within
+==========================================================
+
+optimum latency = 3873 | nodes = (36, 115) | split = bulk
+optimum latency = 4098 | nodes = (20, 128) | split = lin
+optimum latency = 5025 | nodes = (59, 123) | split = qdrt
+optimum latency = 5024 | nodes = (51, 103) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (59.0 minutes) ***
+
+============================================================
+dataset=real2d, numElems=100.0K, numQs=50.0K, qType=overlaps
+============================================================
+
+optimum latency = 2873 | nodes = (63, 128) | split = bulk
+optimum latency = 2995 | nodes = (11, 119) | split = lin
+optimum latency = 3304 | nodes = (21, 126) | split = qdrt
+optimum latency = 3945 | nodes = (51, 103) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (1.0 minutes) ***
+
+=========================================================
+dataset=syth2d, numElems=25.0K, numQs=50.0K, qType=within
+=========================================================
+
+optimum latency = 36 | nodes = (11, 30) | split = bulk
+optimum latency = 72 | nodes = (1, 12) | split = lin
+optimum latency = 73 | nodes = (1, 13) | split = qdrt
+optimum latency = 110 | nodes = (4, 9) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (1.0 minutes) ***
+
+===========================================================
+dataset=syth2d, numElems=25.0K, numQs=50.0K, qType=overlaps
+===========================================================
+
+optimum latency = 36 | nodes = (8, 19) | split = bulk
+optimum latency = 71 | nodes = (1, 8) | split = lin
+optimum latency = 83 | nodes = (4, 20) | split = qdrt
+optimum latency = 113 | nodes = (2, 5) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (4.0 minutes) ***
+
+=========================================================
+dataset=syth2d, numElems=75.0K, numQs=50.0K, qType=within
+=========================================================
+
+optimum latency = 56 | nodes = (8, 17) | split = bulk
+optimum latency = 148 | nodes = (1, 17) | split = lin
+optimum latency = 162 | nodes = (1, 7) | split = qdrt
+optimum latency = 257 | nodes = (3, 6) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (3.0 minutes) ***
+
+===========================================================
+dataset=syth2d, numElems=75.0K, numQs=50.0K, qType=overlaps
+===========================================================
+
+optimum latency = 55 | nodes = (8, 24) | split = bulk
+optimum latency = 144 | nodes = (1, 19) | split = lin
+optimum latency = 176 | nodes = (1, 14) | split = qdrt
+optimum latency = 252 | nodes = (3, 6) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (3.0 minutes) ***
+
+==========================================================
+dataset=syth2d, numElems=100.0K, numQs=50.0K, qType=within
+==========================================================
+
+optimum latency = 59 | nodes = (8, 19) | split = bulk
+optimum latency = 203 | nodes = (1, 14) | split = lin
+optimum latency = 212 | nodes = (1, 9) | split = qdrt
+optimum latency = 324 | nodes = (3, 6) | split = rstar
+
+
+	*** R-tree optimization with pyswarm (4.0 minutes) ***
+
+============================================================
+dataset=syth2d, numElems=100.0K, numQs=50.0K, qType=overlaps
+============================================================
+
+optimum latency = 60 | nodes = (4, 18) | split = bulk
+optimum latency = 180 | nodes = (1, 17) | split = lin
+optimum latency = 230 | nodes = (2, 7) | split = qdrt
+optimum latency = 314 | nodes = (3, 6) | split = rstar
